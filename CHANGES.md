@@ -1,0 +1,19 @@
+### 2026-04-15 — Initial package build (v0.1.0)
+- DESCRIPTION, LICENSE, NAMESPACE: Package skeleton with MIT license, R >= 4.1.0, Matrix dep
+- R/bipartite.R: Two-mode matrix construction engine (Batagelj & Cerinsek 2013)
+- R/counting.R: 13 counting methods — full, fractional, paper, strength, harmonic, arithmetic, geometric, adaptive_geometric, golden, first, last, first_last, position_weighted
+- R/normalize.R: 6 normalization methods — association, cosine, jaccard, inclusion, equivalence, none
+- R/multiply.R: Matrix multiplication engine with raw count tracking
+- R/edgelist.R: Matrix to/from edge list conversion
+- R/author-network.R: author_network() — collaboration, coupling, co_citation, equivalence types
+- R/document-network.R: document_network() — coupling, citation, co_citation, equivalence
+- R/reference-network.R: reference_network() — co_citation, equivalence
+- R/keyword-network.R: keyword_network() — co_occurrence
+- R/institution-network.R: institution_network() — collaboration, coupling, equivalence
+- R/country-network.R: country_network() — collaboration, coupling, equivalence
+- R/source-network.R: source_network() — coupling, co_citation, equivalence
+- R/converters.R: to_igraph(), to_tbl_graph(), to_matrix()
+- R/utils.R: split_field(), aggregate_by_entity(), standardize_authors/refs()
+- R/read-*.R: Readers for Scopus, WoS, OpenAlex, BibTeX, RIS, Lens.org
+- R/data.R: biblio_data example dataset (10 papers, 6 authors, 10 refs, 24 keywords)
+- Tests: 11 test files — unit tests + equivalence tests vs bibliometrix and biblionetwork

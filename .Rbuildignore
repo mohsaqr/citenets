@@ -1,0 +1,9 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
+^LEARNINGS\.md$
+^HANDOFF\.md$
+^CHANGES\.md$
+^CLAUDE\.md$
+^\.github$
+^tmp$
