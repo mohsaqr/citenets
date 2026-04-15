@@ -18,7 +18,7 @@ test_that("co-authorship full counting matches biblionetwork", {
     stringsAsFactors = FALSE
   )
 
-  edges <- author_network(d, "collaboration", count = "full")
+  edges <- author_network(d, "collaboration", counting = "full")
 
   for (i in seq_len(nrow(bn_ref))) {
     a <- bn_ref$from[i]; b <- bn_ref$to[i]
@@ -51,7 +51,7 @@ test_that("co-authorship fractional matches biblionetwork fractional_counting", 
   d <- data.frame(id = c("W1", "W2", "W3"), stringsAsFactors = FALSE)
   d$authors <- list(c("A", "B", "C"), c("A", "B"), c("B", "C", "D"))
 
-  edges <- author_network(d, "collaboration", count = "fractional")
+  edges <- author_network(d, "collaboration", counting = "fractional")
 
   for (i in seq_len(nrow(bn_ref))) {
     a <- bn_ref$from[i]; b <- bn_ref$to[i]
@@ -84,7 +84,7 @@ test_that("co-authorship paper counting matches biblionetwork fractional_countin
   d <- data.frame(id = c("W1", "W2", "W3"), stringsAsFactors = FALSE)
   d$authors <- list(c("A", "B", "C"), c("A", "B"), c("B", "C", "D"))
 
-  edges <- author_network(d, "collaboration", count = "paper")
+  edges <- author_network(d, "collaboration", counting = "paper")
 
   for (i in seq_len(nrow(bn_ref))) {
     a <- bn_ref$from[i]; b <- bn_ref$to[i]
@@ -110,7 +110,7 @@ test_that("co-authorship full + cosine matches biblionetwork", {
   d <- data.frame(id = c("W1", "W2", "W3"), stringsAsFactors = FALSE)
   d$authors <- list(c("A", "B", "C"), c("A", "B"), c("B", "C", "D"))
 
-  edges <- author_network(d, "collaboration", count = "full", measure = "cosine")
+  edges <- author_network(d, "collaboration", counting = "full", similarity = "cosine")
 
   for (i in seq_len(nrow(bn_ref))) {
     a <- bn_ref$from[i]; b <- bn_ref$to[i]
@@ -138,7 +138,7 @@ test_that("coupling cosine matches biblionetwork biblio_coupling", {
     c("R1","R3","R4"), c("R2","R5","R6")
   )
 
-  edges <- document_network(d, "coupling", measure = "cosine")
+  edges <- document_network(d, "coupling", similarity = "cosine")
 
   for (i in seq_len(nrow(bn_ref))) {
     a <- bn_ref$from[i]; b <- bn_ref$to[i]
@@ -169,7 +169,7 @@ test_that("co-citation cosine matches biblionetwork biblio_cocitation", {
     c("R1","R3","R4"), c("R2","R5","R6")
   )
 
-  edges <- reference_network(d, measure = "cosine", threshold = 0)
+  edges <- reference_network(d, similarity = "cosine", threshold = 0)
 
   for (i in seq_len(nrow(bn_ref))) {
     a <- bn_ref$from[i]; b <- bn_ref$to[i]

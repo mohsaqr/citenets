@@ -5,15 +5,15 @@
 #' normalize weights to sum to 1 per paper.
 #'
 #' @param n Integer. Number of authors.
-#' @param count Character. Counting method.
+#' @param counting Character. Counting method.
 #' @param position_weights Numeric vector. Custom weights for
-#'   `count = "position_weighted"`. Default `c(1, 0.8, 0.6, 0.4)`.
+#'   `counting = "position_weighted"`. Default `c(1, 0.8, 0.6, 0.4)`.
 #' @param first_last_weight Numeric. Multiplier for first/last authors
-#'   when `count = "first_last"`. Default 2.
+#'   when `counting = "first_last"`. Default 2.
 #'
 #' @return Numeric vector of length `n`, summing to 1.
 #' @keywords internal
-author_weights <- function(n, count = "fractional",
+author_weights <- function(n, counting = "fractional",
                            position_weights = c(1, 0.8, 0.6, 0.4),
                            first_last_weight = 2) {
   if (n <= 0) return(numeric(0))
@@ -21,7 +21,7 @@ author_weights <- function(n, count = "fractional",
 
   pos <- seq_len(n)
 
-  w <- switch(count,
+  w <- switch(counting,
 
     ## --- Position-independent ---
     full = rep(1, n),
@@ -112,7 +112,7 @@ author_weights <- function(n, count = "fractional",
       raw / sum(raw)
     },
 
-    stop(sprintf("Unknown counting method: '%s'", count), call. = FALSE)
+    stop(sprintf("Unknown counting method: '%s'", counting), call. = FALSE)
   )
 
   w
@@ -126,13 +126,13 @@ author_weights <- function(n, count = "fractional",
 #'
 #' @param data A data frame with `id` and `authors` (list-column where
 #'   author order is preserved).
-#' @param count Character. Counting method.
-#' @param position_weights Numeric vector for `count = "position_weighted"`.
-#' @param first_last_weight Numeric for `count = "first_last"`.
+#' @param counting Character. Counting method.
+#' @param position_weights Numeric vector for `counting = "position_weighted"`.
+#' @param first_last_weight Numeric for `counting = "first_last"`.
 #'
 #' @return A sparse weighted bipartite matrix (works x authors).
 #' @keywords internal
-build_author_bipartite <- function(data, count = "full",
+build_author_bipartite <- function(data, counting = "full",
                                    position_weights = c(1, 0.8, 0.6, 0.4),
                                    first_last_weight = 2) {
   ids <- as.character(data[["id"]])
@@ -144,7 +144,8 @@ build_author_bipartite <- function(data, count = "full",
   author_names <- unlist(authors_list, use.names = FALSE)
   positions <- unlist(lapply(n_per_paper, seq_len), use.names = FALSE)
 
-  ## Drop NA/empty
+  ## Clean: trim whitespace, drop NA / empty / whitespace-only
+  author_names <- trimws(author_names)
   keep <- !is.na(author_names) & nchar(author_names) > 0
   work_idx <- work_idx[keep]
   author_names <- author_names[keep]
@@ -154,7 +155,7 @@ build_author_bipartite <- function(data, count = "full",
   ## Compute weights
   weights <- mapply(
     function(pos, n) {
-      author_weights(n, count = count,
+      author_weights(n, counting = counting,
                      position_weights = position_weights,
                      first_last_weight = first_last_weight)[pos]
     },
@@ -187,20 +188,20 @@ build_author_bipartite <- function(data, count = "full",
 #' keywords, etc.). Modifies the bipartite matrix row weights.
 #'
 #' @param B A sparse binary bipartite matrix (works x entities).
-#' @param count Character. One of `"full"`, `"fractional"`, `"paper"`,
+#' @param counting Character. One of `"full"`, `"fractional"`, `"paper"`,
 #'   `"strength"`.
 #' @param network_type Character. `"symmetric"` or `"coupling"`.
 #'
 #' @return A weighted sparse matrix.
 #' @keywords internal
-apply_counting <- function(B, count = "full",
+apply_counting <- function(B, counting = "full",
                            network_type = "symmetric") {
-  if (count == "full") return(B)
+  if (counting == "full") return(B)
 
   n_per_work <- Matrix::rowSums(B > 0)
   n_per_work[n_per_work == 0] <- 1
 
-  if (count == "fractional") {
+  if (counting == "fractional") {
     if (network_type == "symmetric") {
       ## Perianes-Rodriguez: each entity's total per paper = 1
       ## Link weight = 1/(n-1) per shared paper
@@ -211,7 +212,7 @@ apply_counting <- function(B, count = "full",
     }
     B <- Matrix::Diagonal(x = sqrt(w)) %*% B
 
-  } else if (count == "paper") {
+  } else if (counting == "paper") {
     if (network_type == "symmetric") {
       w <- ifelse(
         n_per_work > 1,
@@ -223,7 +224,7 @@ apply_counting <- function(B, count = "full",
     }
     B <- Matrix::Diagonal(x = sqrt(w)) %*% B
 
-  } else if (count == "strength") {
+  } else if (counting == "strength") {
     n_works <- nrow(B)
     entity_freq <- Matrix::colSums(B > 0)
     entity_freq[entity_freq == 0] <- 1

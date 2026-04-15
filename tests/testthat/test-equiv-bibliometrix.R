@@ -34,7 +34,7 @@ test_that("co-authorship matches bibliometrix (full counting)", {
   diag(A_bm) <- 0
 
   ## citenets
-  edges_cn <- author_network(d, "collaboration", count = "full")
+  edges_cn <- author_network(d, "collaboration", counting = "full")
   A_cn <- as.matrix(to_matrix(edges_cn))
 
   ## Align row/column order

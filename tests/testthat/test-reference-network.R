@@ -21,7 +21,7 @@ test_that("reference_network co_citation with full counting", {
 
 test_that("reference_network with association strength", {
   d <- make_test_data()
-  edges <- reference_network(d, measure = "association", threshold = 0)
+  edges <- reference_network(d, similarity = "association", threshold = 0)
 
   expect_true(all(edges$weight > 0))
   expect_true(all(is.finite(edges$weight)))

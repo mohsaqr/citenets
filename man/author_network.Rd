@@ -7,8 +7,8 @@
 author_network(
   data,
   type = "collaboration",
-  count = "full",
-  measure = "none",
+  counting = "full",
+  similarity = "none",
   threshold = 0,
   min_occur = 1L,
   position_weights = c(1, 0.8, 0.6, 0.4),
@@ -32,14 +32,14 @@ are cited together by the same paper. Requires a
 authors' full collaboration/citation profiles.}
 }}
 
-\item{count}{Character. Counting method. Position-independent methods
+\item{counting}{Character. Counting method. Position-independent methods
 (\code{"full"}, \code{"fractional"}, \code{"paper"}, \code{"strength"}) work for all types.
 Position-dependent methods (\code{"harmonic"}, \code{"arithmetic"}, \code{"geometric"},
 \code{"adaptive_geometric"}, \code{"golden"}, \code{"first"}, \code{"last"},
 \code{"first_last"}, \code{"position_weighted"}) are available for
 \code{type = "collaboration"}.}
 
-\item{measure}{Character. Similarity measure: \code{"none"}, \code{"association"},
+\item{similarity}{Character. Similarity measure: \code{"none"}, \code{"association"},
 \code{"cosine"}, \code{"jaccard"}, \code{"inclusion"}, \code{"equivalence"}.}
 
 \item{threshold}{Numeric. Minimum edge weight. Default 0.}
@@ -48,9 +48,9 @@ Position-dependent methods (\code{"harmonic"}, \code{"arithmetic"}, \code{"geome
 included. Default 1.}
 
 \item{position_weights}{Numeric vector. Custom weights for
-\code{count = "position_weighted"}. Default \code{c(1, 0.8, 0.6, 0.4)}.}
+\code{counting = "position_weighted"}. Default \code{c(1, 0.8, 0.6, 0.4)}.}
 
-\item{first_last_weight}{Numeric. Multiplier for \code{count = "first_last"}.
+\item{first_last_weight}{Numeric. Multiplier for \code{counting = "first_last"}.
 Default 2.}
 }
 \value{
@@ -64,9 +64,9 @@ that respect author byline order.
 \examples{
 data(biblio_data)
 author_network(biblio_data, "collaboration")
-author_network(biblio_data, "collaboration", count = "harmonic")
-author_network(biblio_data, "collaboration", count = "geometric",
-               measure = "association")
+author_network(biblio_data, "collaboration", counting = "harmonic")
+author_network(biblio_data, "collaboration", counting = "geometric",
+               similarity = "association")
 }
 \references{
 Hagen, N. T. (2008). Harmonic allocation of authorship credit.

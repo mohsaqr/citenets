@@ -7,13 +7,13 @@
 #'   by the counting method.
 #' @param mode Character. `"columns"` for column-mode co-occurrence
 #'   (e.g., co-citation), `"rows"` for row-mode (e.g., coupling).
-#' @param measure Character. Normalization method (see [normalize()]).
+#' @param similarity Character. Normalization method (see [normalize()]).
 #' @param threshold Numeric. Minimum edge weight to retain.
 #'
 #' @return A data frame with columns `from`, `to`, `weight`, `count`, `shared`.
 #' @keywords internal
 multiply_bipartite <- function(B, mode = "columns",
-                               measure = "none",
+                               similarity = "none",
                                threshold = 0) {
   ## Weighted co-occurrence matrix (sparse)
   if (mode == "columns") {
@@ -31,8 +31,8 @@ multiply_bipartite <- function(B, mode = "columns",
   }
 
   ## Normalize weighted matrix (or just zero the diagonal)
-  if (measure != "none") {
-    A_norm <- normalize(A, method = measure)
+  if (similarity != "none") {
+    A_norm <- normalize(A, method = similarity)
   } else {
     Matrix::diag(A) <- 0
     A_norm <- A

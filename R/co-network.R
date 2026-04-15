@@ -14,8 +14,8 @@
 #'   entities are linked when they share values from the `by` field.
 #' @param sep Character or `NULL`. Delimiter for splitting character columns.
 #'   Default `";"`. Set to `NULL` if columns are already list-columns.
-#' @param count Character. Counting method. Default `"full"`.
-#' @param measure Character. Normalization method. Default `"none"`.
+#' @param counting Character. Counting method. Default `"full"`.
+#' @param similarity Character. Normalization method. Default `"none"`.
 #' @param threshold Numeric. Minimum edge weight. Default 0.
 #' @param min_occur Integer. Minimum entity frequency. Default 1.
 #'
@@ -26,34 +26,34 @@
 #' data(biblio_data)
 #'
 #' # Co-occurrence: keywords appearing in the same document
-#' co_network(biblio_data, "keywords")
+#' conetwork(biblio_data, "keywords")
 #'
 #' # Authors linked by shared keywords
-#' co_network(biblio_data, "authors", by = "keywords")
+#' conetwork(biblio_data, "authors", by = "keywords")
 #'
 #' # Keywords linked by shared authors
-#' co_network(biblio_data, "keywords", by = "authors")
+#' conetwork(biblio_data, "keywords", by = "authors")
 #'
 #' # Journals linked by shared references (= journal coupling)
-#' co_network(biblio_data, "journal", by = "references", measure = "cosine")
+#' conetwork(biblio_data, "journal", by = "references", similarity = "cosine")
 #'
 #' # Auto-splits semicolon-delimited string columns
 #' d <- data.frame(id = 1:3, tags = c("ml; dl; nlp", "ml; cv", "dl; cv"))
-#' co_network(d, "tags")
-co_network <- function(data,
+#' conetwork(d, "tags")
+conetwork <- function(data,
                        field,
                        by = NULL,
                        sep = ";",
-                       count = "full",
-                       measure = "none",
+                       counting = "full",
+                       similarity = "none",
                        threshold = 0,
                        min_occur = 1L) {
   stopifnot(
     is.data.frame(data),
     "id" %in% names(data),
     field %in% names(data),
-    count %in% position_independent_counts(),
-    measure %in% c("none", "association", "cosine", "jaccard",
+    counting %in% position_independent_counts(),
+    similarity %in% c("none", "association", "cosine", "jaccard",
                     "inclusion", "equivalence")
   )
 
@@ -62,15 +62,15 @@ co_network <- function(data,
   if (is.null(by)) {
     ## Co-occurrence within one field (same document)
     B <- build_bipartite(data, field = field, min_freq = min_occur)
-    B <- apply_counting(B, count = count, network_type = "symmetric")
-    multiply_bipartite(B, mode = "columns", measure = measure,
+    B <- apply_counting(B, counting = counting, network_type = "symmetric")
+    multiply_bipartite(B, mode = "columns", similarity = similarity,
                        threshold = threshold)
   } else {
     ## Entities linked by shared values from `by` field
     stopifnot(by %in% names(data))
     data <- ensure_list_column(data, by, sep)
     build_by_network(data, field = field, by = by,
-                     count = count, measure = measure,
+                     counting = counting, similarity = similarity,
                      threshold = threshold, min_occur = min_occur)
   }
 }
@@ -78,7 +78,7 @@ co_network <- function(data,
 
 #' Build a network where entities share values from another field
 #' @keywords internal
-build_by_network <- function(data, field, by, count, measure,
+build_by_network <- function(data, field, by, counting, similarity,
                               threshold, min_occur) {
   field_col <- data[[field]]
   by_col <- data[[by]]
@@ -136,8 +136,8 @@ build_by_network <- function(data, field, by, count, measure,
 
   ## Build bipartite: entities × by_values, then project to entity × entity
   B <- build_bipartite(agg_df, field = "values", min_freq = 1L)
-  B <- apply_counting(B, count = count, network_type = "symmetric")
-  multiply_bipartite(B, mode = "rows", measure = measure,
+  B <- apply_counting(B, counting = counting, network_type = "symmetric")
+  multiply_bipartite(B, mode = "rows", similarity = similarity,
                      threshold = threshold)
 }
 

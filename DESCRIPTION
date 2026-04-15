@@ -1,6 +1,6 @@
 Package: citenets
 Title: Citation, Co-Citation, and Bibliometric Network Construction
-Version: 0.1.0
+Version: 0.2.0
 Authors@R:
     person("Mohammed", "Saqr", , "saqr@saqr.me", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-5881-3109"))

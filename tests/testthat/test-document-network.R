@@ -28,7 +28,7 @@ test_that("document_network citation returns directed internal citations", {
 
 test_that("document_network with cosine gives coupling angle", {
   d <- make_test_data()
-  edges <- document_network(d, "coupling", measure = "cosine")
+  edges <- document_network(d, "coupling", similarity = "cosine")
 
   get_w <- function(a, b) {
     row <- edges[

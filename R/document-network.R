@@ -13,9 +13,9 @@
 #'       cited together by other documents in the dataset.}
 #'     \item{`"equivalence"`}{Profile similarity of reference vectors.}
 #'   }
-#' @param count Character. Counting method. Default `"full"`.
+#' @param counting Character. Counting method. Default `"full"`.
 #'   Position-dependent methods are not applicable to document networks.
-#' @param measure Character. Similarity measure. Default `"none"`.
+#' @param similarity Character. Similarity measure. Default `"none"`.
 #' @param threshold Numeric. Minimum edge weight. Default 0.
 #' @param min_occur Integer. Minimum reference frequency. Default 1.
 #'
@@ -27,11 +27,11 @@
 #' @examples
 #' data(biblio_data)
 #' document_network(biblio_data, "coupling")
-#' document_network(biblio_data, "coupling", count = "strength")
+#' document_network(biblio_data, "coupling", counting = "strength")
 document_network <- function(data,
                              type = "coupling",
-                             count = "full",
-                             measure = "none",
+                             counting = "full",
+                             similarity = "none",
                              threshold = 0,
                              min_occur = 1L) {
   stopifnot(
@@ -39,8 +39,8 @@ document_network <- function(data,
     "id" %in% names(data),
     "references" %in% names(data),
     type %in% c("coupling", "citation", "co_citation", "equivalence"),
-    count %in% position_independent_counts(),
-    measure %in% c("none", "association", "cosine", "jaccard",
+    counting %in% position_independent_counts(),
+    similarity %in% c("none", "association", "cosine", "jaccard",
                     "inclusion", "equivalence")
   )
 
@@ -51,17 +51,17 @@ document_network <- function(data,
   B <- build_bipartite(data, field = "references", min_freq = min_occur)
 
   if (type == "coupling") {
-    B <- apply_counting(B, count = count, network_type = "coupling")
-    multiply_bipartite(B, mode = "rows", measure = measure,
+    B <- apply_counting(B, counting = counting, network_type = "coupling")
+    multiply_bipartite(B, mode = "rows", similarity = similarity,
                        threshold = threshold)
 
   } else if (type == "co_citation") {
-    B <- apply_counting(B, count = count, network_type = "symmetric")
-    multiply_bipartite(B, mode = "columns", measure = measure,
+    B <- apply_counting(B, counting = counting, network_type = "symmetric")
+    multiply_bipartite(B, mode = "columns", similarity = similarity,
                        threshold = threshold)
 
   } else if (type == "equivalence") {
-    multiply_bipartite(B, mode = "rows", measure = "cosine",
+    multiply_bipartite(B, mode = "rows", similarity = "cosine",
                        threshold = threshold)
   }
 }

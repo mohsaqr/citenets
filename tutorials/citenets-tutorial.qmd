@@ -1,0 +1,729 @@
+---
+title: "citenets: Citation and Bibliometric Network Construction in R"
+subtitle: "A Comprehensive Tutorial with Equivalence Testing"
+author: "Mohammed Saqr"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: false
+    code-tools: true
+    theme: flatly
+    fig-width: 7
+    fig-height: 5
+execute:
+  warning: false
+  message: false
+---
+
+## 1. Why citenets?
+
+Bibliometric network analysis requires constructing networks from scholarly data — who collaborates with whom, which papers are cited together, what keywords co-occur. Existing tools either bundle everything into a monolithic package with 87+ dependencies (bibliometrix) or cover only fragments of the problem (biblionetwork).
+
+citenets fills the gap: **network construction only**, with state-of-the-art counting and normalization methods, minimal dependencies, and an intuitive API.
+
+| Feature | citenets | bibliometrix | biblionetwork |
+|---------|----------|--------------|---------------|
+| **Counting methods** | 13 | 1 (full) | 3 |
+| **Similarity measures** | 6 | 5 | 1 (cosine) |
+| **Network types** | 8 functions | 4 | 3 |
+| **Dependencies** | 3 | 87+ | 3 |
+| **Output** | Data frame | Sparse matrix | Data table |
+
+```{r}
+#| label: setup
+devtools::load_all("..")
+```
+
+## 2. Reading Bibliometric Data
+
+citenets reads data from six sources into a unified tidy format: every reader returns the same column structure with human-readable names and list-columns for multi-valued fields.
+
+### 2.1 From Scopus CSV
+
+```{r}
+#| label: read-scopus
+data(biblio_data)
+str(biblio_data, max.level = 1)
+```
+
+The standardized format: `id`, `title`, `year`, `journal`, `doi`, `cited_by_count` as scalars. `authors`, `references`, `keywords` as list-columns — already split, no semicolons to wrestle with.
+
+```{r}
+#| label: show-authors
+# Each paper's authors are a character vector, not a semicolon string
+biblio_data$authors[[1]]
+```
+
+### 2.2 Other Formats
+
+All readers return the same structure:
+
+```r
+# Web of Science plaintext
+data <- read_wos("savedrecs.txt")
+
+# Web of Science tab-delimited
+data <- read_wos("savedrecs.txt", format = "tab")
+
+# OpenAlex (from openalexR::oa_fetch output)
+data <- read_openalex(oa_results)
+
+# BibTeX (note: no cited references in standard .bib)
+data <- read_bibtex("refs.bib")
+
+# RIS (note: no cited references in standard .ris)
+data <- read_ris("export.ris")
+
+# Lens.org CSV
+data <- read_lens("lens_export.csv")
+```
+
+## 3. Network Types
+
+citenets builds seven types of entity networks plus a generic co-occurrence function.
+
+### 3.1 Author Collaboration Network
+
+Two authors are linked when they co-author a paper. The most common bibliometric network.
+
+```{r}
+#| label: author-collab
+edges <- author_network(biblio_data, "collaboration")
+edges
+```
+
+Each row is an edge. `weight` = co-authorship count, `count` = raw count, `shared` = number of shared papers.
+
+### 3.2 Reference Co-citation Network
+
+Two references are linked when they are cited together by the same paper. Co-citation strength reflects intellectual structure — which foundational works are perceived as related.
+
+```{r}
+#| label: ref-cocit
+edges <- reference_network(biblio_data, threshold = 0)
+head(edges, 10)
+```
+
+### 3.3 Document Bibliographic Coupling
+
+Two documents are linked when they share cited references. Unlike co-citation (retrospective), coupling is prospective — computable immediately upon publication.
+
+```{r}
+#| label: doc-coupling
+edges <- document_network(biblio_data, "coupling")
+head(edges)
+```
+
+### 3.4 Direct Citation Network
+
+Directed edges from citing to cited documents. Only internal citations (both documents present in the dataset) are included.
+
+```{r}
+#| label: direct-cit
+edges <- document_network(biblio_data, "citation")
+edges
+```
+
+### 3.5 Keyword Co-occurrence Network
+
+Two keywords are linked when they appear in the same paper.
+
+```{r}
+#| label: keyword-cooc
+edges <- keyword_network(biblio_data, threshold = 0)
+head(edges, 10)
+```
+
+### 3.6 Other Entity Networks
+
+Institution, country, and source (journal) networks follow the same pattern:
+
+```r
+# Institutions linked by co-authorship
+institution_network(data, "collaboration")
+
+# Countries linked by shared references
+country_network(data, "coupling")
+
+# Journals linked by co-citation
+source_network(data, "co_citation")
+```
+
+Each supports types: `"collaboration"`, `"coupling"`, `"co_citation"`, `"equivalence"` (where applicable).
+
+## 4. Counting Methods — The Core Innovation
+
+Counting methods determine how credit is distributed among co-authors or how co-occurrences are weighted. citenets implements 13 methods — 9 more than any other R package.
+
+### 4.1 Position-Independent Methods (4)
+
+These treat all authors equally regardless of byline position.
+
+```{r}
+#| label: counting-independent
+d <- data.frame(id = "W1", stringsAsFactors = FALSE)
+d$authors <- list(c("Alice", "Bob", "Carol"))
+
+# Full counting: each link = 1
+author_network(d, "collaboration", counting = "full")
+
+# Fractional (Perianes-Rodriguez): each author's total = 1
+# Link weight = 1/(n-1) = 0.5
+author_network(d, "collaboration", counting = "fractional")
+
+# Paper-level fractional (Batagelj): paper total = 1
+# Link weight = 2/(n*(n-1)) = 1/3
+author_network(d, "collaboration", counting = "paper")
+```
+
+The difference: **fractional** normalizes per author (each author's total co-authorship from this paper = 1). **Paper** normalizes per paper (the paper's total contribution to the network = 1).
+
+```{r}
+#| label: counting-paper-verify
+# Verify Batagelj property: total contribution per paper = 1
+edges <- author_network(d, "collaboration", counting = "paper")
+sum(edges$weight)  # Should be 1.0
+```
+
+### 4.2 Position-Dependent Methods (9)
+
+These respect author byline order — first author gets more credit.
+
+```{r}
+#| label: counting-weights
+# Compare all position-dependent methods for a 5-author paper
+methods <- c("harmonic", "arithmetic", "geometric",
+             "adaptive_geometric", "golden",
+             "first", "last", "first_last")
+
+weights_table <- do.call(rbind, lapply(methods, function(m) {
+  w <- author_weights(5, m)
+  data.frame(method = m, pos1 = w[1], pos2 = w[2], pos3 = w[3],
+             pos4 = w[4], pos5 = w[5])
+}))
+weights_table
+```
+
+#### Harmonic (Hagen 2008)
+
+Credit proportional to 1/position. The first author always gets twice the credit of the second, the second 1.5 times the third, etc.
+
+```{r}
+#| label: harmonic
+author_network(biblio_data, "collaboration", counting = "harmonic") |>
+  head(5)
+```
+
+#### Geometric
+
+Exponential decay: 0.5^(position-1). Concentrates credit heavily on early authors.
+
+```{r}
+#| label: geometric
+author_network(biblio_data, "collaboration", counting = "geometric") |>
+  head(5)
+```
+
+#### Adaptive Geometric (Liu & Fang 2023)
+
+The ratio of first to last author credit equals the number of authors. Adapts to team size.
+
+```{r}
+#| label: adaptive
+# Verify: first/last ratio = n
+for (n in c(3, 5, 10)) {
+  w <- author_weights(n, "adaptive_geometric")
+  cat(sprintf("n=%2d: first/last = %.2f (expected %d)\n", n, w[1]/w[n], n))
+}
+```
+
+#### Golden Ratio
+
+Uses phi (1.618...) as the decay constant. Consecutive authors have a ratio of phi.
+
+```{r}
+#| label: golden
+w <- author_weights(5, "golden")
+phi <- (1 + sqrt(5)) / 2
+cat("Consecutive ratios:", paste(round(w[1:4] / w[2:5], 3), collapse = ", "), "\n")
+cat("Expected phi:", round(phi, 3), "\n")
+```
+
+#### First / Last / First-Last
+
+```{r}
+#| label: first-last
+# First author only: others get zero weight → no co-authorship edges
+author_weights(4, "first")
+
+# Last author only
+author_weights(4, "last")
+
+# First and last elevated, middle share rest
+author_weights(4, "first_last")
+```
+
+#### Position Weighted (custom)
+
+User-defined weight vector:
+
+```{r}
+#| label: position-weighted
+# Custom: heavy first, moderate second, equal rest
+author_network(biblio_data, "collaboration",
+               counting = "position_weighted",
+               position_weights = c(1.0, 0.7, 0.3))  |>
+  head(5)
+```
+
+### 4.3 How Position-Dependent Counting Affects Network Edges
+
+The key mechanism: author positional weights are placed directly into the bipartite matrix. Matrix multiplication then gives edge weight = w_i * w_j per shared paper. Higher-ranked author pairs get stronger edges.
+
+```{r}
+#| label: counting-mechanism
+# One paper: Alice (pos 1), Bob (pos 2), Carol (pos 3)
+d <- data.frame(id = "W1", stringsAsFactors = FALSE)
+d$authors <- list(c("Alice", "Bob", "Carol"))
+
+# Harmonic weights: Alice = 6/11, Bob = 3/11, Carol = 2/11
+w <- author_weights(3, "harmonic")
+cat("Weights:", round(w, 4), "\n")
+
+# Edge weight = product of positional weights
+edges <- author_network(d, "collaboration", counting = "harmonic")
+cat("Alice-Bob:", round(w[1] * w[2], 4), "=", round(edges$weight[edges$from == "Alice" & edges$to == "Bob"], 4), "\n")
+cat("Alice-Carol:", round(w[1] * w[3], 4), "=", round(edges$weight[edges$from == "Alice" & edges$to == "Carol"], 4), "\n")
+cat("Bob-Carol:", round(w[2] * w[3], 4), "=", round(edges$weight[edges$from == "Bob" & edges$to == "Carol"], 4), "\n")
+```
+
+## 5. Similarity Measures
+
+After counting co-occurrences, similarity measures normalize edge weights to account for how active each entity is. An entity that appears in 100 papers will naturally co-occur with more entities — normalization corrects for this.
+
+### 5.1 The Six Measures
+
+Given co-occurrence count c_ij and total occurrences w_i, w_j:
+
+| Similarity | Formula | When to use |
+|------------|---------|-------------|
+| `"none"` | c_ij | Raw counts, no correction |
+| `"association"` | c_ij / (w_i * w_j) | Recommended default (van Eck & Waltman 2009) |
+| `"cosine"` | c_ij / sqrt(w_i * w_j) | Coupling angle (Sen & Gan 1983) |
+| `"jaccard"` | c_ij / (w_i + w_j - c_ij) | Set overlap |
+| `"inclusion"` | c_ij / min(w_i, w_j) | Subset detection |
+| `"equivalence"` | c_ij^2 / (w_i * w_j) | Cosine squared |
+
+```{r}
+#| label: similarity-compare
+# Same network, different similarity measures
+methods <- c("none", "association", "cosine", "jaccard", "inclusion", "equivalence")
+
+results <- lapply(methods, function(m) {
+  e <- reference_network(biblio_data, similarity = m, threshold = 0)
+  data.frame(similarity = m,
+             edges = nrow(e),
+             min_weight = round(min(e$weight), 4),
+             max_weight = round(max(e$weight), 4),
+             mean_weight = round(mean(e$weight), 4))
+})
+do.call(rbind, results)
+```
+
+### 5.2 Association Strength — The Recommended Default
+
+Association strength measures how much more often two entities co-occur than expected by chance. A value of 1 means exactly as expected; >1 means they co-occur more than random; <1 means less.
+
+```{r}
+#| label: association
+edges <- reference_network(biblio_data, similarity = "association", threshold = 0)
+head(edges)
+```
+
+### 5.3 Cosine Similarity = Coupling Angle
+
+For bibliographic coupling, cosine normalization is equivalent to the "coupling angle" of Sen & Gan (1983).
+
+```{r}
+#| label: cosine-coupling
+# Document coupling with cosine = coupling angle
+edges <- document_network(biblio_data, "coupling", similarity = "cosine")
+head(edges)
+```
+
+## 6. The Generic conetwork Function
+
+`conetwork()` works with **any data frame** — no `read_scopus()` required. Point it at a column and go.
+
+### 6.1 Basic Co-occurrence
+
+```{r}
+#| label: conetwork-basic
+# Any data frame with a delimited column
+df <- data.frame(
+  id = 1:5,
+  tags = c("ml; dl; nlp", "ml; cv", "dl; nlp; cv",
+           "stats; ml; regression", "dl; cv; stats"),
+  year = c(2020, 2020, 2021, 2021, 2022)
+)
+
+conetwork(df, "tags", sep = ";")
+```
+
+### 6.2 Linked By Another Field
+
+```{r}
+#| label: conetwork-by
+# Tags linked through shared categories
+df$category <- c("A", "A", "B", "B", "A")
+conetwork(df, "tags", by = "category", sep = ";")
+```
+
+### 6.3 Works With List-Columns Too
+
+```{r}
+#| label: conetwork-list
+# Already-split list-columns: set sep = NULL
+conetwork(biblio_data, "keywords", sep = NULL)  |> head()
+```
+
+### 6.4 On Raw Scopus Data (No Preprocessing)
+
+```r
+# Read raw CSV — don't use read_scopus(), just read.csv()
+raw <- read.csv("scopus_export.csv")
+
+# Build network directly from the raw column names
+conetwork(raw, "Author.Keywords", sep = ";")
+conetwork(raw, "Authors", sep = ",")
+conetwork(raw, "Authors", by = "Author.Keywords", sep = ";")
+```
+
+## 7. Converters
+
+Network edges go anywhere — igraph, tidygraph, or back to a matrix.
+
+```{r}
+#| label: converters
+edges <- author_network(biblio_data, "collaboration")
+
+# To igraph
+g <- to_igraph(edges)
+cat("igraph:", igraph::vcount(g), "nodes,", igraph::ecount(g), "edges\n")
+
+# To adjacency matrix
+A <- to_matrix(edges)
+cat("Matrix:", nrow(A), "x", ncol(A), "\n")
+```
+
+```r
+# To tidygraph (requires tidygraph package)
+tg <- to_tbl_graph(edges)
+```
+
+## 8. Equivalence Testing — citenets vs bibliometrix vs biblionetwork
+
+The following sections verify that citenets produces numerically identical results to established packages.
+
+### 8.1 Co-authorship: citenets vs bibliometrix
+
+```{r}
+#| label: equiv-coauth-bm
+library(bibliometrix)
+
+# Same data in both formats
+d_cn <- data.frame(id = paste0("W", 1:5), stringsAsFactors = FALSE)
+d_cn$authors <- list(
+  c("SMITH J", "JONES A", "LEE K"),
+  c("SMITH J", "BROWN M"),
+  c("JONES A", "LEE K", "CHEN W"),
+  c("BROWN M", "DAVIS R", "SMITH J"),
+  c("LEE K", "CHEN W")
+)
+
+M_bm <- data.frame(
+  AU = c("SMITH J;JONES A;LEE K", "SMITH J;BROWN M",
+         "JONES A;LEE K;CHEN W", "BROWN M;DAVIS R;SMITH J",
+         "LEE K;CHEN W"),
+  DB = rep("ISI", 5), stringsAsFactors = FALSE
+)
+
+# citenets
+A_cn <- as.matrix(to_matrix(author_network(d_cn, "collaboration")))
+
+# bibliometrix
+A_bm <- as.matrix(biblioNetwork(M_bm, analysis = "collaboration", network = "authors"))
+diag(A_bm) <- 0
+
+# Align and compare
+common <- sort(intersect(rownames(A_cn), rownames(A_bm)))
+max_diff <- max(abs(A_cn[common, common] - A_bm[common, common]))
+cat("Max difference:", max_diff, "\n")
+```
+
+### 8.2 Co-authorship Full Counting: citenets vs biblionetwork
+
+```{r}
+#| label: equiv-coauth-full
+library(biblionetwork)
+library(data.table)
+
+auth_long <- data.table(
+  article = c("W1","W1","W1", "W2","W2", "W3","W3","W3"),
+  author  = c("A","B","C",    "A","B",    "B","C","D")
+)
+d <- data.frame(id = c("W1", "W2", "W3"), stringsAsFactors = FALSE)
+d$authors <- list(c("A","B","C"), c("A","B"), c("B","C","D"))
+
+# biblionetwork
+bn <- as.data.frame(coauth_network(auth_long, authors = "author",
+                                    articles = "article", method = "full_counting"))
+# citenets
+cn <- author_network(d, "collaboration", counting = "full")
+
+# Compare
+comparison <- merge(
+  cn[, c("from", "to", "weight")],
+  bn[, c("from", "to", "weight")],
+  by = c("from", "to"), suffixes = c(".citenets", ".biblionetwork")
+)
+if (nrow(comparison) == 0) {
+  bn2 <- bn; names(bn2)[1:2] <- c("to", "from")
+  comparison <- merge(cn[, c("from","to","weight")], bn2[, c("from","to","weight")],
+                      by = c("from","to"), suffixes = c(".citenets", ".biblionetwork"))
+}
+comparison$diff <- comparison$weight.citenets - comparison$weight.biblionetwork
+comparison
+```
+
+### 8.3 Fractional Counting: citenets vs biblionetwork
+
+```{r}
+#| label: equiv-fractional
+# biblionetwork fractional = 1/(n-1) per link = Perianes-Rodriguez
+bn_frac <- as.data.frame(coauth_network(auth_long, authors = "author",
+                                         articles = "article",
+                                         method = "fractional_counting"))
+cn_frac <- author_network(d, "collaboration", counting = "fractional")
+
+cat("=== biblionetwork (fractional_counting) ===\n")
+print(bn_frac[, c("from", "to", "weight")])
+cat("\n=== citenets (counting = 'fractional') ===\n")
+print(cn_frac[, c("from", "to", "weight")])
+```
+
+### 8.4 Paper-Level Fractional: citenets vs biblionetwork
+
+```{r}
+#| label: equiv-paper
+# biblionetwork fractional_counting_refined = 2/(n*(n-1)) = Batagelj
+bn_ref <- as.data.frame(coauth_network(auth_long, authors = "author",
+                                        articles = "article",
+                                        method = "fractional_counting_refined"))
+cn_paper <- author_network(d, "collaboration", counting = "paper")
+
+cat("=== biblionetwork (fractional_counting_refined) ===\n")
+print(bn_ref[, c("from", "to", "weight")])
+cat("\n=== citenets (counting = 'paper') ===\n")
+print(cn_paper[, c("from", "to", "weight")])
+```
+
+### 8.5 Coupling Cosine: citenets vs biblionetwork
+
+```{r}
+#| label: equiv-coupling
+refs_long <- data.table(
+  citing = c("W1","W1","W1", "W2","W2","W2", "W3","W3","W3"),
+  cited  = c("R1","R2","R3", "R1","R2","R4", "R2","R3","R4")
+)
+d_refs <- data.frame(id = c("W1","W2","W3"), stringsAsFactors = FALSE)
+d_refs$references <- list(c("R1","R2","R3"), c("R1","R2","R4"), c("R2","R3","R4"))
+
+# biblionetwork: coupling angle (cosine)
+bn_coup <- as.data.frame(biblio_coupling(refs_long, source = "citing", ref = "cited",
+                                          normalized_weight_only = FALSE))
+# citenets: coupling + cosine
+cn_coup <- document_network(d_refs, "coupling", similarity = "cosine")
+
+cat("=== biblionetwork ===\n")
+print(bn_coup[, c("from", "to", "weight", "nb_shared_references")])
+cat("\n=== citenets ===\n")
+print(cn_coup)
+```
+
+### 8.6 All Five Normalization Formulas: citenets vs bibliometrix
+
+```{r}
+#| label: equiv-normalize
+# Build a known co-occurrence matrix
+A <- matrix(
+  c(4,2,2,1, 2,3,2,2, 2,2,3,1, 1,2,1,2),
+  nrow = 4, dimnames = list(paste0("R",1:4), paste0("R",1:4))
+)
+
+methods_map <- list(
+  association = "association",
+  cosine = "salton",
+  jaccard = "jaccard",
+  inclusion = "inclusion",
+  equivalence = "equivalence"
+)
+
+results <- lapply(names(methods_map), function(m) {
+  cn <- as.matrix(normalize(A, m))
+  bm <- as.matrix(bibliometrix::normalizeSimilarity(
+    Matrix::Matrix(A, sparse = TRUE), type = methods_map[[m]]
+  ))
+  bm[is.nan(bm)] <- 0; diag(bm) <- 0
+  max_diff <- max(abs(cn - bm))
+  data.frame(method = m, max_diff = max_diff,
+             match = ifelse(max_diff < 1e-10, "EXACT", "DIFFERS"))
+})
+do.call(rbind, results)
+```
+
+### 8.7 Co-citation Cosine: citenets vs biblionetwork
+
+```{r}
+#| label: equiv-cocit
+refs_long5 <- data.table(
+  citing = rep(paste0("W", 1:5), each = 3),
+  cited = c("R1","R2","R3", "R1","R2","R4", "R2","R3","R5",
+            "R1","R3","R4", "R2","R5","R6")
+)
+d5 <- data.frame(id = paste0("W", 1:5), stringsAsFactors = FALSE)
+d5$references <- list(
+  c("R1","R2","R3"), c("R1","R2","R4"), c("R2","R3","R5"),
+  c("R1","R3","R4"), c("R2","R5","R6")
+)
+
+bn_cc <- as.data.frame(biblio_cocitation(
+  refs_long5, source = "citing", ref = "cited",
+  normalized_weight_only = FALSE
+))
+cn_cc <- reference_network(d5, similarity = "cosine", threshold = 0)
+
+cat("=== biblionetwork (co-citation cosine) ===\n")
+print(bn_cc[, c("from", "to", "weight")])
+cat("\n=== citenets (co-citation cosine) ===\n")
+print(cn_cc[, c("from", "to", "weight")])
+```
+
+## 9. Counting Methods Compared Side by Side
+
+```{r}
+#| label: counting-comparison
+# 10-paper dataset: compare all counting methods on co-authorship
+methods_all <- c("full", "fractional", "paper",
+                 "harmonic", "arithmetic", "geometric",
+                 "adaptive_geometric", "golden")
+
+comparison <- lapply(methods_all, function(m) {
+  e <- author_network(biblio_data, "collaboration", counting = m)
+  data.frame(
+    counting = m,
+    edges = nrow(e),
+    total_weight = round(sum(e$weight), 3),
+    max_weight = round(max(e$weight), 4),
+    mean_weight = round(mean(e$weight), 4)
+  )
+})
+do.call(rbind, comparison)
+```
+
+The total network weight reveals the fundamental difference between counting approaches: full counting inflates with team size, fractional normalizes per author, paper normalizes per paper.
+
+## 10. Performance
+
+```{r}
+#| label: performance
+# Benchmark on the example dataset (small, but demonstrates the pattern)
+cat("Dataset:", nrow(biblio_data), "papers,",
+    length(unique(unlist(biblio_data$authors))), "authors\n\n")
+
+funs <- list(
+  "author collab"    = function() author_network(biblio_data, "collaboration"),
+  "author harmonic"  = function() author_network(biblio_data, "collaboration",
+                                                  counting = "harmonic"),
+  "ref co-citation"  = function() reference_network(biblio_data, threshold = 0),
+  "doc coupling"     = function() document_network(biblio_data, "coupling"),
+  "keyword co-occ"   = function() keyword_network(biblio_data, threshold = 0),
+  "conetwork generic"= function() conetwork(biblio_data, "keywords", sep = NULL)
+)
+
+timings <- vapply(names(funs), function(nm) {
+  system.time(funs[[nm]]())[3]
+}, numeric(1))
+
+data.frame(function_name = names(timings), seconds = round(timings, 4))
+```
+
+## 11. Quick Reference
+
+### All Counting Methods
+
+| Method | Type | Formula (author i of n) |
+|--------|------|------------------------|
+| `"full"` | Position-independent | 1 for all |
+| `"fractional"` | Position-independent | 1/(n-1) per link |
+| `"paper"` | Position-independent | 2/(n*(n-1)) per link |
+| `"strength"` | Position-independent | IDF-weighted |
+| `"harmonic"` | Position-dependent | (1/i) / H_n |
+| `"arithmetic"` | Position-dependent | (n-i+1) / sum(1:n) |
+| `"geometric"` | Position-dependent | 0.5^(i-1) normalized |
+| `"adaptive_geometric"` | Position-dependent | r^(n-i), r=n^(1/(n-1)) |
+| `"golden"` | Position-dependent | phi^(n-i) normalized |
+| `"first"` | Special | First author = 1, rest = 0 |
+| `"last"` | Special | Last author = 1, rest = 0 |
+| `"first_last"` | Special | First + last elevated |
+| `"position_weighted"` | Custom | User-defined vector |
+
+### All Similarity Measures
+
+| Similarity | Formula |
+|------------|---------|
+| `"none"` | Raw co-occurrence count |
+| `"association"` | c_ij / (w_i * w_j) |
+| `"cosine"` | c_ij / sqrt(w_i * w_j) |
+| `"jaccard"` | c_ij / (w_i + w_j - c_ij) |
+| `"inclusion"` | c_ij / min(w_i, w_j) |
+| `"equivalence"` | c_ij^2 / (w_i * w_j) |
+
+### All Network Functions
+
+```r
+# Entity networks (specialized)
+author_network(data, type, counting, similarity, threshold, min_occur)
+document_network(data, type, counting, similarity, threshold, min_occur)
+reference_network(data, type, counting, similarity, threshold, min_occur)
+keyword_network(data, field, counting, similarity, threshold, min_occur)
+institution_network(data, type, counting, similarity, threshold, min_occur)
+country_network(data, type, counting, similarity, threshold, min_occur)
+source_network(data, type, counting, similarity, threshold, min_occur)
+
+# Generic (any data frame)
+conetwork(df, field, sep, by, aggregate, group)
+
+# Readers
+read_scopus(file)  read_wos(file)  read_openalex(data)
+read_bibtex(file)  read_ris(file)  read_lens(file)
+
+# Converters
+to_igraph(edges)  to_tbl_graph(edges)  to_matrix(edges)
+
+# Utils
+normalize(matrix, method)  split_field(x, sep)
+```
+
+## References
+
+- Batagelj, V., & Cerinsek, M. (2013). On bibliographic networks. *Scientometrics*, 96(3), 845--864.
+- Hagen, N. T. (2008). Harmonic allocation of authorship credit. *Scientometrics*, 84(3), 785--793.
+- Liu, W., & Fang, H. (2023). A geometric counting method adaptive to the author number. *Journal of Informetrics*, 17(2), 101397.
+- Perianes-Rodriguez, A., Waltman, L., & van Eck, N. J. (2016). Constructing bibliometric networks: A comparison between full and fractional counting. *Journal of Informetrics*, 10(4), 1178--1195.
+- Sen, S. K., & Gan, S. K. (1983). A mathematical extension of the idea of bibliographic coupling. *Annals of Library Science and Documentation*, 30(2), 78--82.
+- Small, H. (1973). Co-citation in the scientific literature. *JASIS*, 24(4), 265--269.
+- van Eck, N. J., & Waltman, L. (2009). How to normalize co-occurrence data? *JASIST*, 60(8), 1635--1651.
+- Yan, E., & Ding, Y. (2012). Scholarly network similarities. *JASIST*, 63(7), 1313--1326.

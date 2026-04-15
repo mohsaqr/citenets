@@ -6,7 +6,7 @@
 \usage{
 author_weights(
   n,
-  count = "fractional",
+  counting = "fractional",
   position_weights = c(1, 0.8, 0.6, 0.4),
   first_last_weight = 2
 )
@@ -14,13 +14,13 @@ author_weights(
 \arguments{
 \item{n}{Integer. Number of authors.}
 
-\item{count}{Character. Counting method.}
+\item{counting}{Character. Counting method.}
 
 \item{position_weights}{Numeric vector. Custom weights for
-\code{count = "position_weighted"}. Default \code{c(1, 0.8, 0.6, 0.4)}.}
+\code{counting = "position_weighted"}. Default \code{c(1, 0.8, 0.6, 0.4)}.}
 
 \item{first_last_weight}{Numeric. Multiplier for first/last authors
-when \code{count = "first_last"}. Default 2.}
+when \code{counting = "first_last"}. Default 2.}
 }
 \value{
 Numeric vector of length \code{n}, summing to 1.

@@ -4,12 +4,12 @@
 \alias{apply_counting}
 \title{Apply counting weights to a generic bipartite matrix}
 \usage{
-apply_counting(B, count = "full", network_type = "symmetric")
+apply_counting(B, counting = "full", network_type = "symmetric")
 }
 \arguments{
 \item{B}{A sparse binary bipartite matrix (works x entities).}
 
-\item{count}{Character. One of \code{"full"}, \code{"fractional"}, \code{"paper"},
+\item{counting}{Character. One of \code{"full"}, \code{"fractional"}, \code{"paper"},
 \code{"strength"}.}
 
 \item{network_type}{Character. \code{"symmetric"} or \code{"coupling"}.}

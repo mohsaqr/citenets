@@ -33,7 +33,8 @@ build_bipartite <- function(data, field, min_freq = 1L) {
   work_idx <- rep(seq_along(ids), lengths(entities_list))
   entity_names <- unlist(entities_list, use.names = FALSE)
 
-  ## Drop NA entries
+  ## Clean: trim whitespace, drop NA / empty / whitespace-only
+  entity_names <- trimws(entity_names)
   keep <- !is.na(entity_names) & nchar(entity_names) > 0
   work_idx <- work_idx[keep]
   entity_names <- entity_names[keep]
@@ -81,10 +82,11 @@ build_bipartite_long <- function(edges, min_freq = 1L) {
     all(c("source", "target") %in% names(edges))
   )
 
-  sources <- as.character(edges[["source"]])
-  targets <- as.character(edges[["target"]])
+  sources <- trimws(as.character(edges[["source"]]))
+  targets <- trimws(as.character(edges[["target"]]))
 
-  keep <- !is.na(sources) & !is.na(targets) & nchar(targets) > 0
+  keep <- !is.na(sources) & !is.na(targets) &
+    nchar(sources) > 0 & nchar(targets) > 0
   sources <- sources[keep]
   targets <- targets[keep]
 

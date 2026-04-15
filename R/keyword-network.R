@@ -7,8 +7,8 @@
 #' @param field Character. Name of the keyword list-column. Default
 #'   `"keywords"`. Alternatives: `"author_keywords"`, `"index_keywords"`,
 #'   `"keywords_plus"`.
-#' @param count Character. Counting method. Default `"full"`.
-#' @param measure Character. Similarity measure. Default `"none"`.
+#' @param counting Character. Counting method. Default `"full"`.
+#' @param similarity Character. Similarity measure. Default `"none"`.
 #' @param threshold Numeric. Minimum edge weight. Default 1.
 #' @param min_occur Integer. Minimum keyword frequency. Default 1.
 #'
@@ -18,11 +18,11 @@
 #' @examples
 #' data(biblio_data)
 #' keyword_network(biblio_data)
-#' keyword_network(biblio_data, measure = "association")
+#' keyword_network(biblio_data, similarity = "association")
 keyword_network <- function(data,
                             field = "keywords",
-                            count = "full",
-                            measure = "none",
+                            counting = "full",
+                            similarity = "none",
                             threshold = 1,
                             min_occur = 1L) {
   stopifnot(
@@ -30,13 +30,13 @@ keyword_network <- function(data,
     "id" %in% names(data),
     field %in% names(data),
     is.list(data[[field]]),
-    count %in% position_independent_counts(),
-    measure %in% c("none", "association", "cosine", "jaccard",
+    counting %in% position_independent_counts(),
+    similarity %in% c("none", "association", "cosine", "jaccard",
                     "inclusion", "equivalence")
   )
 
   B <- build_bipartite(data, field = field, min_freq = min_occur)
-  B <- apply_counting(B, count = count, network_type = "symmetric")
-  multiply_bipartite(B, mode = "columns", measure = measure,
+  B <- apply_counting(B, counting = counting, network_type = "symmetric")
+  multiply_bipartite(B, mode = "columns", similarity = similarity,
                      threshold = threshold)
 }

@@ -7,8 +7,8 @@
 document_network(
   data,
   type = "coupling",
-  count = "full",
-  measure = "none",
+  counting = "full",
+  similarity = "none",
   threshold = 0,
   min_occur = 1L
 )
@@ -27,10 +27,10 @@ cited together by other documents in the dataset.}
 \item{\code{"equivalence"}}{Profile similarity of reference vectors.}
 }}
 
-\item{count}{Character. Counting method. Default \code{"full"}.
+\item{counting}{Character. Counting method. Default \code{"full"}.
 Position-dependent methods are not applicable to document networks.}
 
-\item{measure}{Character. Similarity measure. Default \code{"none"}.}
+\item{similarity}{Character. Similarity measure. Default \code{"none"}.}
 
 \item{threshold}{Numeric. Minimum edge weight. Default 0.}
 
@@ -47,5 +47,5 @@ Constructs a network between documents (papers) in the dataset.
 \examples{
 data(biblio_data)
 document_network(biblio_data, "coupling")
-document_network(biblio_data, "coupling", count = "strength")
+document_network(biblio_data, "coupling", counting = "strength")
 }

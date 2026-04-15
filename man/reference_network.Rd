@@ -7,8 +7,8 @@
 reference_network(
   data,
   type = "co_citation",
-  count = "full",
-  measure = "none",
+  counting = "full",
+  similarity = "none",
   threshold = 1,
   min_occur = 1L
 )
@@ -18,9 +18,9 @@ reference_network(
 
 \item{type}{Character. \code{"co_citation"} (default) or \code{"equivalence"}.}
 
-\item{count}{Character. Counting method. Default \code{"full"}.}
+\item{counting}{Character. Counting method. Default \code{"full"}.}
 
-\item{measure}{Character. Similarity measure. Default \code{"none"}.}
+\item{similarity}{Character. Similarity measure. Default \code{"none"}.}
 
 \item{threshold}{Numeric. Minimum edge weight. Default 1.}
 
@@ -36,7 +36,7 @@ Two references are linked when they are cited together by the same paper.
 \examples{
 data(biblio_data)
 reference_network(biblio_data)
-reference_network(biblio_data, measure = "association")
+reference_network(biblio_data, similarity = "association")
 }
 \references{
 Small, H. (1973). Co-citation in the scientific literature.

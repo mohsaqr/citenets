@@ -97,7 +97,7 @@ test_that("build_author_bipartite produces correct positional weights", {
   d <- make_test_data()
 
   ## Harmonic weighting
-  B <- build_author_bipartite(d, count = "harmonic")
+  B <- build_author_bipartite(d, counting = "harmonic")
 
   ## W1 has Alice (pos 1) and Bob (pos 2), n=2
   ## Harmonic: H_2 = 1 + 0.5 = 1.5

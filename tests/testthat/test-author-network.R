@@ -21,7 +21,7 @@ test_that("author_network collaboration with full counting", {
 
 test_that("author_network collaboration with harmonic counting", {
   d <- make_test_data()
-  edges <- author_network(d, "collaboration", count = "harmonic")
+  edges <- author_network(d, "collaboration", counting = "harmonic")
 
   get_w <- function(a, b) {
     row <- edges[
@@ -42,7 +42,7 @@ test_that("author_network collaboration with harmonic counting", {
 
 test_that("author_network collaboration with geometric counting", {
   d <- make_test_data()
-  edges <- author_network(d, "collaboration", count = "geometric")
+  edges <- author_network(d, "collaboration", counting = "geometric")
 
   get_w <- function(a, b) {
     row <- edges[
@@ -59,7 +59,7 @@ test_that("author_network collaboration with geometric counting", {
 
 test_that("author_network collaboration with first-author counting", {
   d <- make_test_data()
-  edges <- author_network(d, "collaboration", count = "first")
+  edges <- author_network(d, "collaboration", counting = "first")
 
   get_w <- function(a, b) {
     row <- edges[
@@ -78,7 +78,7 @@ test_that("author_network collaboration with first-author counting", {
 
 test_that("author_network with normalization", {
   d <- make_test_data()
-  edges <- author_network(d, "collaboration", measure = "association")
+  edges <- author_network(d, "collaboration", similarity = "association")
 
   expect_true(all(edges$weight >= 0))
   expect_true(all(is.finite(edges$weight)))

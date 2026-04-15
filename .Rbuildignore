@@ -7,3 +7,6 @@
 ^CLAUDE\.md$
 ^\.github$
 ^tmp$
+^tutorials$
+^data-raw$
+^README\.md$

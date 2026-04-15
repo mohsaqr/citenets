@@ -100,7 +100,7 @@ test_that("network weights via multiplication match expected products", {
   ## A-B link = (6/11)*(3/11) = 18/121
   ## A-C link = (6/11)*(2/11) = 12/121
   ## B-C link = (3/11)*(2/11) = 6/121
-  edges <- author_network(d, "collaboration", count = "harmonic")
+  edges <- author_network(d, "collaboration", counting = "harmonic")
 
   get_w <- function(a, b) {
     row <- edges[(edges$from == a & edges$to == b) |
@@ -121,7 +121,7 @@ test_that("fractional counting for references: Perianes-Rodriguez 1/(n-1)", {
   d <- data.frame(id = "W1", stringsAsFactors = FALSE)
   d$references <- list(c("R1", "R2", "R3", "R4"))
 
-  edges <- reference_network(d, count = "fractional", threshold = 0)
+  edges <- reference_network(d, counting = "fractional", threshold = 0)
 
   ## All pairs should have weight 1/(4-1) = 1/3
   expect_true(all(abs(edges$weight - 1/3) < 1e-10))
@@ -133,7 +133,7 @@ test_that("paper-level fractional: Batagelj total per paper = 1", {
   d <- data.frame(id = "W1", stringsAsFactors = FALSE)
   d$references <- list(c("R1", "R2", "R3", "R4"))
 
-  edges <- reference_network(d, count = "paper", threshold = 0)
+  edges <- reference_network(d, counting = "paper", threshold = 0)
 
   ## Sum of all edge weights = 1
   expect_equal(sum(edges$weight), 1, tolerance = 1e-10)
@@ -148,7 +148,7 @@ test_that("author fractional counting: link weight = 1/(n-1) per shared paper", 
   d <- data.frame(id = "W1", stringsAsFactors = FALSE)
   d$authors <- list(c("A", "B", "C", "D"))
 
-  edges <- author_network(d, "collaboration", count = "fractional")
+  edges <- author_network(d, "collaboration", counting = "fractional")
 
   ## 6 pairs, each weight = 1/(4-1) = 1/3
   expect_true(all(abs(edges$weight - 1/3) < 1e-10))

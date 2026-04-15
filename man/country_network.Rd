@@ -7,8 +7,8 @@
 country_network(
   data,
   type = "collaboration",
-  count = "full",
-  measure = "none",
+  counting = "full",
+  similarity = "none",
   threshold = 0,
   min_occur = 1L
 )
@@ -20,9 +20,9 @@ country names). For coupling, also needs \code{references}.}
 \item{type}{Character. \code{"collaboration"} (default), \code{"coupling"}, or
 \code{"equivalence"}.}
 
-\item{count}{Character. Counting method. Default \code{"full"}.}
+\item{counting}{Character. Counting method. Default \code{"full"}.}
 
-\item{measure}{Character. Similarity measure. Default \code{"none"}.}
+\item{similarity}{Character. Similarity measure. Default \code{"none"}.}
 
 \item{threshold}{Numeric. Minimum edge weight. Default 0.}
 

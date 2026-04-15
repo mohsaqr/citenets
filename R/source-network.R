@@ -7,8 +7,8 @@
 #'   `cited_journals` list-column.
 #' @param type Character. `"coupling"` (default), `"co_citation"`, or
 #'   `"equivalence"`.
-#' @param count Character. Counting method. Default `"full"`.
-#' @param measure Character. Similarity measure. Default `"none"`.
+#' @param counting Character. Counting method. Default `"full"`.
+#' @param similarity Character. Similarity measure. Default `"none"`.
 #' @param threshold Numeric. Minimum edge weight. Default 0.
 #' @param min_occur Integer. Minimum papers per source. Default 1.
 #'
@@ -21,16 +21,16 @@
 #' }
 source_network <- function(data,
                            type = "coupling",
-                           count = "full",
-                           measure = "none",
+                           counting = "full",
+                           similarity = "none",
                            threshold = 0,
                            min_occur = 1L) {
   stopifnot(
     is.data.frame(data),
     "id" %in% names(data),
     type %in% c("coupling", "co_citation", "equivalence"),
-    count %in% position_independent_counts(),
-    measure %in% c("none", "association", "cosine", "jaccard",
+    counting %in% position_independent_counts(),
+    similarity %in% c("none", "association", "cosine", "jaccard",
                     "inclusion", "equivalence")
   )
 
@@ -39,8 +39,8 @@ source_network <- function(data,
     agg <- aggregate_by_entity(data, entity_field = "journal",
                                 value_field = "references")
     B <- build_bipartite(agg, field = "references")
-    B <- apply_counting(B, count = count, network_type = "coupling")
-    multiply_bipartite(B, mode = "rows", measure = measure,
+    B <- apply_counting(B, counting = counting, network_type = "coupling")
+    multiply_bipartite(B, mode = "rows", similarity = similarity,
                        threshold = threshold)
 
   } else if (type == "co_citation") {
@@ -52,8 +52,8 @@ source_network <- function(data,
            call. = FALSE)
     }
     B <- build_bipartite(data, field = field, min_freq = min_occur)
-    B <- apply_counting(B, count = count, network_type = "symmetric")
-    multiply_bipartite(B, mode = "columns", measure = measure,
+    B <- apply_counting(B, counting = counting, network_type = "symmetric")
+    multiply_bipartite(B, mode = "columns", similarity = similarity,
                        threshold = threshold)
 
   } else if (type == "equivalence") {
@@ -61,7 +61,7 @@ source_network <- function(data,
     agg <- aggregate_by_entity(data, entity_field = "journal",
                                 value_field = "references")
     B <- build_bipartite(agg, field = "references")
-    multiply_bipartite(B, mode = "rows", measure = "cosine",
+    multiply_bipartite(B, mode = "rows", similarity = "cosine",
                        threshold = threshold)
   }
 }

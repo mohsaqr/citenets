@@ -6,7 +6,7 @@
 \usage{
 build_author_bipartite(
   data,
-  count = "full",
+  counting = "full",
   position_weights = c(1, 0.8, 0.6, 0.4),
   first_last_weight = 2
 )
@@ -15,11 +15,11 @@ build_author_bipartite(
 \item{data}{A data frame with \code{id} and \code{authors} (list-column where
 author order is preserved).}
 
-\item{count}{Character. Counting method.}
+\item{counting}{Character. Counting method.}
 
-\item{position_weights}{Numeric vector for \code{count = "position_weighted"}.}
+\item{position_weights}{Numeric vector for \code{counting = "position_weighted"}.}
 
-\item{first_last_weight}{Numeric for \code{count = "first_last"}.}
+\item{first_last_weight}{Numeric for \code{counting = "first_last"}.}
 }
 \value{
 A sparse weighted bipartite matrix (works x authors).

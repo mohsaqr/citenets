@@ -4,7 +4,7 @@
 \alias{multiply_bipartite}
 \title{Construct a co-occurrence network via two-mode multiplication}
 \usage{
-multiply_bipartite(B, mode = "columns", measure = "none", threshold = 0)
+multiply_bipartite(B, mode = "columns", similarity = "none", threshold = 0)
 }
 \arguments{
 \item{B}{A sparse bipartite matrix (works x entities), already weighted
@@ -13,7 +13,7 @@ by the counting method.}
 \item{mode}{Character. \code{"columns"} for column-mode co-occurrence
 (e.g., co-citation), \code{"rows"} for row-mode (e.g., coupling).}
 
-\item{measure}{Character. Normalization method (see \code{\link[=normalize]{normalize()}}).}
+\item{similarity}{Character. Normalization method (see \code{\link[=normalize]{normalize()}}).}
 
 \item{threshold}{Numeric. Minimum edge weight to retain.}
 }

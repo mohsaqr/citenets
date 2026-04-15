@@ -7,8 +7,8 @@
 keyword_network(
   data,
   field = "keywords",
-  count = "full",
-  measure = "none",
+  counting = "full",
+  similarity = "none",
   threshold = 1,
   min_occur = 1L
 )
@@ -20,9 +20,9 @@ keyword_network(
 \code{"keywords"}. Alternatives: \code{"author_keywords"}, \code{"index_keywords"},
 \code{"keywords_plus"}.}
 
-\item{count}{Character. Counting method. Default \code{"full"}.}
+\item{counting}{Character. Counting method. Default \code{"full"}.}
 
-\item{measure}{Character. Similarity measure. Default \code{"none"}.}
+\item{similarity}{Character. Similarity measure. Default \code{"none"}.}
 
 \item{threshold}{Numeric. Minimum edge weight. Default 1.}
 
@@ -38,5 +38,5 @@ together in the same document.
 \examples{
 data(biblio_data)
 keyword_network(biblio_data)
-keyword_network(biblio_data, measure = "association")
+keyword_network(biblio_data, similarity = "association")
 }
