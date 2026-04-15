@@ -4,7 +4,16 @@
 \alias{build_by_network}
 \title{Build a network where entities share values from another field}
 \usage{
-build_by_network(data, field, by, counting, similarity, threshold, min_occur)
+build_by_network(
+  data,
+  field,
+  by,
+  counting,
+  similarity,
+  threshold,
+  min_occur,
+  top_n = NULL
+)
 }
 \description{
 Build a network where entities share values from another field

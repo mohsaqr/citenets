@@ -10,7 +10,8 @@ reference_network(
   counting = "full",
   similarity = "none",
   threshold = 1,
-  min_occur = 1L
+  min_occur = 1L,
+  top_n = NULL
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ reference_network(
 \item{threshold}{Numeric. Minimum edge weight. Default 1.}
 
 \item{min_occur}{Integer. Minimum times a reference must be cited. Default 1.}
+
+\item{top_n}{Integer or NULL. Return only the top n edges by weight.
+Default NULL (all edges).}
 }
 \value{
 A data frame with columns \code{from}, \code{to}, \code{weight}, \code{count}, \code{shared}.

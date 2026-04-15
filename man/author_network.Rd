@@ -12,7 +12,8 @@ author_network(
   threshold = 0,
   min_occur = 1L,
   position_weights = c(1, 0.8, 0.6, 0.4),
-  first_last_weight = 2
+  first_last_weight = 2,
+  top_n = NULL
 )
 }
 \arguments{
@@ -52,6 +53,9 @@ included. Default 1.}
 
 \item{first_last_weight}{Numeric. Multiplier for \code{counting = "first_last"}.
 Default 2.}
+
+\item{top_n}{Integer or NULL. Return only the top n edges by weight.
+Default NULL (all edges).}
 }
 \value{
 A data frame with columns \code{from}, \code{to}, \code{weight}, \code{count}, \code{shared}.

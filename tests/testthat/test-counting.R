@@ -102,12 +102,12 @@ test_that("build_author_bipartite produces correct positional weights", {
   ## W1 has Alice (pos 1) and Bob (pos 2), n=2
   ## Harmonic: H_2 = 1 + 0.5 = 1.5
   ## Alice: (1/1)/1.5 = 2/3, Bob: (1/2)/1.5 = 1/3
-  expect_equal(B["W1", "Alice"], 2/3, tolerance = tol)
-  expect_equal(B["W1", "Bob"], 1/3, tolerance = tol)
+  expect_equal(B["W1", "ALICE"], 2/3, tolerance = tol)
+  expect_equal(B["W1", "BOB"], 1/3, tolerance = tol)
 
   ## W3 has Bob (pos 1), Carol (pos 2), Dan (pos 3), n=3
   h3 <- 1 + 1/2 + 1/3
-  expect_equal(B["W3", "Bob"], 1/h3, tolerance = tol)
-  expect_equal(B["W3", "Carol"], (1/2)/h3, tolerance = tol)
-  expect_equal(B["W3", "Dan"], (1/3)/h3, tolerance = tol)
+  expect_equal(B["W3", "BOB"], 1/h3, tolerance = tol)
+  expect_equal(B["W3", "CAROL"], (1/2)/h3, tolerance = tol)
+  expect_equal(B["W3", "DAN"], (1/3)/h3, tolerance = tol)
 })

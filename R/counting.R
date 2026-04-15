@@ -144,8 +144,10 @@ build_author_bipartite <- function(data, counting = "full",
   author_names <- unlist(authors_list, use.names = FALSE)
   positions <- unlist(lapply(n_per_paper, seq_len), use.names = FALSE)
 
-  ## Clean: trim whitespace, drop NA / empty / whitespace-only
-  author_names <- trimws(author_names)
+  ## Basic normalization: trim whitespace, case-fold to uppercase
+  author_names <- toupper(trimws(author_names))
+
+  ## Drop NAs, empty strings, whitespace-only
   keep <- !is.na(author_names) & nchar(author_names) > 0
   work_idx <- work_idx[keep]
   author_names <- author_names[keep]

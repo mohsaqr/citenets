@@ -35,16 +35,16 @@ test_that("build_bipartite works with authors", {
   B <- build_bipartite(d, "authors")
 
   expect_equal(nrow(B), 3)
-  expect_equal(ncol(B), 4)  # Alice, Bob, Carol, Dan
-  expect_equal(sum(B["W1", ]), 2)  # Alice + Bob
-  expect_equal(sum(B["W3", ]), 3)  # Bob + Carol + Dan
+  expect_equal(ncol(B), 4)  # ALICE, BOB, CAROL, DAN
+  expect_equal(sum(B["W1", ]), 2)  # ALICE + BOB
+  expect_equal(sum(B["W3", ]), 3)  # BOB + CAROL + DAN
 })
 
-test_that("build_bipartite handles empty and NA entries", {
+test_that("build_bipartite drops NA, empty, whitespace", {
   d <- data.frame(id = c("W1", "W2"), stringsAsFactors = FALSE)
-  d$refs <- list(c("R1", "R2"), c(NA_character_, ""))
+  d$refs <- list(c("R1", "R2"), c(NA_character_, "", "   "))
   B <- build_bipartite(d, "refs")
 
   expect_equal(ncol(B), 2)  # only R1, R2
-  expect_equal(sum(B["W2", ]), 0)  # no valid refs for W2
+  expect_equal(sum(B["W2", ]), 0)  # nothing valid
 })

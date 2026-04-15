@@ -10,7 +10,8 @@ country_network(
   counting = "full",
   similarity = "none",
   threshold = 0,
-  min_occur = 1L
+  min_occur = 1L,
+  top_n = NULL
 )
 }
 \arguments{
@@ -27,6 +28,9 @@ country names). For coupling, also needs \code{references}.}
 \item{threshold}{Numeric. Minimum edge weight. Default 0.}
 
 \item{min_occur}{Integer. Minimum papers per country. Default 1.}
+
+\item{top_n}{Integer or NULL. Return only the top n edges by weight.
+Default NULL (all edges).}
 }
 \value{
 A data frame with columns \code{from}, \code{to}, \code{weight}, \code{count}, \code{shared}.

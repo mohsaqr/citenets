@@ -10,8 +10,8 @@ test_that("keyword_network returns correct co-occurrence", {
     row$weight[1]
   }
 
-  expect_equal(get_w("ml", "dl"), 1)
-  expect_equal(get_w("ml", "nlp"), 1)
-  expect_equal(get_w("dl", "nlp"), 1)
-  expect_equal(get_w("ml", "cv"), 0)
+  expect_equal(get_w("ML", "DL"), 1)
+  expect_equal(get_w("ML", "NLP"), 1)
+  expect_equal(get_w("DL", "NLP"), 1)
+  expect_equal(get_w("ML", "CV"), 0)
 })

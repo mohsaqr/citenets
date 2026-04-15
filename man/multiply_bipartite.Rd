@@ -4,7 +4,13 @@
 \alias{multiply_bipartite}
 \title{Construct a co-occurrence network via two-mode multiplication}
 \usage{
-multiply_bipartite(B, mode = "columns", similarity = "none", threshold = 0)
+multiply_bipartite(
+  B,
+  mode = "columns",
+  similarity = "none",
+  threshold = 0,
+  top_n = NULL
+)
 }
 \arguments{
 \item{B}{A sparse bipartite matrix (works x entities), already weighted
@@ -16,6 +22,9 @@ by the counting method.}
 \item{similarity}{Character. Normalization method (see \code{\link[=normalize]{normalize()}}).}
 
 \item{threshold}{Numeric. Minimum edge weight to retain.}
+
+\item{top_n}{Integer or \code{NULL}. If specified, keep only the top \code{n}
+most frequent nodes and return all edges among them.}
 }
 \value{
 A data frame with columns \code{from}, \code{to}, \code{weight}, \code{count}, \code{shared}.

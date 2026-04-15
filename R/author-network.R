@@ -33,6 +33,8 @@
 #'   `counting = "position_weighted"`. Default `c(1, 0.8, 0.6, 0.4)`.
 #' @param first_last_weight Numeric. Multiplier for `counting = "first_last"`.
 #'   Default 2.
+#' @param top_n Integer or NULL. Return only the top n edges by weight.
+#'   Default NULL (all edges).
 #'
 #' @return A data frame with columns `from`, `to`, `weight`, `count`, `shared`.
 #'
@@ -58,7 +60,8 @@ author_network <- function(data,
                            threshold = 0,
                            min_occur = 1L,
                            position_weights = c(1, 0.8, 0.6, 0.4),
-                           first_last_weight = 2) {
+                           first_last_weight = 2,
+                           top_n = NULL) {
   stopifnot(
     is.data.frame(data),
     "id" %in% names(data),
@@ -82,12 +85,12 @@ author_network <- function(data,
       ## Measure "cosine" for equivalence type
       m <- if (type == "equivalence") "cosine" else similarity
       multiply_bipartite(B, mode = "columns", similarity = m,
-                         threshold = threshold)
+                         threshold = threshold, top_n = top_n)
     } else {
       B <- build_bipartite(data, field = "authors", min_freq = min_occur)
       B <- apply_counting(B, counting = counting, network_type = "symmetric")
       multiply_bipartite(B, mode = "columns", similarity = similarity,
-                         threshold = threshold)
+                         threshold = threshold, top_n = top_n)
     }
 
   } else if (type == "coupling") {
@@ -98,7 +101,7 @@ author_network <- function(data,
     ct <- if (is_positional) "full" else counting
     B <- apply_counting(B, counting = ct, network_type = "coupling")
     multiply_bipartite(B, mode = "rows", similarity = similarity,
-                       threshold = threshold)
+                       threshold = threshold, top_n = top_n)
 
   } else if (type == "co_citation") {
     field <- if ("cited_first_authors" %in% names(data)) {
@@ -112,12 +115,12 @@ author_network <- function(data,
     ct <- if (is_positional) "full" else counting
     B <- apply_counting(B, counting = ct, network_type = "symmetric")
     multiply_bipartite(B, mode = "columns", similarity = similarity,
-                       threshold = threshold)
+                       threshold = threshold, top_n = top_n)
 
   } else if (type == "equivalence") {
     B <- build_bipartite(data, field = "authors", min_freq = min_occur)
     ## Equivalence = cosine similarity of full profiles
     multiply_bipartite(B, mode = "columns", similarity = "cosine",
-                       threshold = threshold)
+                       threshold = threshold, top_n = top_n)
   }
 }

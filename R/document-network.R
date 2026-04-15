@@ -18,6 +18,8 @@
 #' @param similarity Character. Similarity measure. Default `"none"`.
 #' @param threshold Numeric. Minimum edge weight. Default 0.
 #' @param min_occur Integer. Minimum reference frequency. Default 1.
+#' @param top_n Integer or NULL. Return only the top n edges by weight.
+#'   Default NULL (all edges).
 #'
 #' @return A data frame with columns `from`, `to`, `weight`, `count`, `shared`.
 #'   For `type = "citation"`, the edges are directed (from = citing,
@@ -33,7 +35,8 @@ document_network <- function(data,
                              counting = "full",
                              similarity = "none",
                              threshold = 0,
-                             min_occur = 1L) {
+                             min_occur = 1L,
+                             top_n = NULL) {
   stopifnot(
     is.data.frame(data),
     "id" %in% names(data),
@@ -45,7 +48,15 @@ document_network <- function(data,
   )
 
   if (type == "citation") {
-    return(build_direct_citation(data))
+    edges <- build_direct_citation(data)
+    if (!is.null(top_n) && nrow(edges) > 0) {
+      ## Top-n nodes by frequency (cited + citing count)
+      all_nodes <- c(edges$from, edges$to)
+      freq <- sort(table(all_nodes), decreasing = TRUE)
+      top_nodes <- names(freq)[seq_len(min(top_n, length(freq)))]
+      edges <- edges[edges$from %in% top_nodes & edges$to %in% top_nodes, ]
+    }
+    return(edges)
   }
 
   B <- build_bipartite(data, field = "references", min_freq = min_occur)
@@ -53,16 +64,16 @@ document_network <- function(data,
   if (type == "coupling") {
     B <- apply_counting(B, counting = counting, network_type = "coupling")
     multiply_bipartite(B, mode = "rows", similarity = similarity,
-                       threshold = threshold)
+                       threshold = threshold, top_n = top_n)
 
   } else if (type == "co_citation") {
     B <- apply_counting(B, counting = counting, network_type = "symmetric")
     multiply_bipartite(B, mode = "columns", similarity = similarity,
-                       threshold = threshold)
+                       threshold = threshold, top_n = top_n)
 
   } else if (type == "equivalence") {
     multiply_bipartite(B, mode = "rows", similarity = "cosine",
-                       threshold = threshold)
+                       threshold = threshold, top_n = top_n)
   }
 }
 
@@ -75,7 +86,7 @@ build_direct_citation <- function(data) {
   citing <- rep(ids, lengths(refs_list))
   cited <- unlist(refs_list, use.names = FALSE)
 
-  keep <- cited %in% ids & !is.na(cited) & citing != cited
+  keep <- cited %in% ids & !is.na(cited)
   citing <- citing[keep]
   cited <- cited[keep]
 

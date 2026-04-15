@@ -13,10 +13,10 @@ test_that("author_network collaboration with full counting", {
     row$weight[1]
   }
 
-  expect_equal(get_w("Alice", "Bob"), 1)
-  expect_equal(get_w("Alice", "Carol"), 1)
-  expect_equal(get_w("Bob", "Carol"), 1)
-  expect_equal(get_w("Alice", "Dan"), 0)
+  expect_equal(get_w("ALICE", "BOB"), 1)
+  expect_equal(get_w("ALICE", "CAROL"), 1)
+  expect_equal(get_w("BOB", "CAROL"), 1)
+  expect_equal(get_w("ALICE", "DAN"), 0)
 })
 
 test_that("author_network collaboration with harmonic counting", {
@@ -32,12 +32,12 @@ test_that("author_network collaboration with harmonic counting", {
   }
 
   ## W1: Alice (2/3), Bob (1/3) -> co-auth = 2/3 * 1/3 = 2/9
-  expect_equal(get_w("Alice", "Bob"), 2/9, tolerance = tol)
+  expect_equal(get_w("ALICE", "BOB"), 2/9, tolerance = tol)
 
   ## W3: Bob (1/H3), Carol ((1/2)/H3), Dan ((1/3)/H3)
   h3 <- 1 + 1/2 + 1/3
   ## Bob-Carol from W3: (1/h3) * ((1/2)/h3)
-  expect_equal(get_w("Bob", "Carol"), (1/h3) * ((1/2)/h3), tolerance = tol)
+  expect_equal(get_w("BOB", "CAROL"), (1/h3) * ((1/2)/h3), tolerance = tol)
 })
 
 test_that("author_network collaboration with geometric counting", {
@@ -54,7 +54,7 @@ test_that("author_network collaboration with geometric counting", {
 
   ## W2: Alice (pos 1), Carol (pos 2), n=2
   ## geometric: (1, 0.5) / 1.5 = (2/3, 1/3)
-  expect_equal(get_w("Alice", "Carol"), (2/3) * (1/3), tolerance = tol)
+  expect_equal(get_w("ALICE", "CAROL"), (2/3) * (1/3), tolerance = tol)
 })
 
 test_that("author_network collaboration with first-author counting", {

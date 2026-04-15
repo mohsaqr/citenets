@@ -9,12 +9,15 @@
 #'   (e.g., co-citation), `"rows"` for row-mode (e.g., coupling).
 #' @param similarity Character. Normalization method (see [normalize()]).
 #' @param threshold Numeric. Minimum edge weight to retain.
+#' @param top_n Integer or `NULL`. If specified, keep only the top `n`
+#'   most frequent nodes and return all edges among them.
 #'
 #' @return A data frame with columns `from`, `to`, `weight`, `count`, `shared`.
 #' @keywords internal
 multiply_bipartite <- function(B, mode = "columns",
                                similarity = "none",
-                               threshold = 0) {
+                               threshold = 0,
+                               top_n = NULL) {
   ## Weighted co-occurrence matrix (sparse)
   if (mode == "columns") {
     A <- Matrix::crossprod(B)
@@ -28,6 +31,16 @@ multiply_bipartite <- function(B, mode = "columns",
     A_raw <- Matrix::crossprod(B_bin)
   } else {
     A_raw <- Matrix::tcrossprod(B_bin)
+  }
+
+  ## Top-n node filter: keep only the most frequent entities
+  if (!is.null(top_n)) {
+    freq <- Matrix::diag(A)
+    if (length(freq) > top_n) {
+      keep_idx <- order(-freq)[seq_len(top_n)]
+      A <- A[keep_idx, keep_idx]
+      A_raw <- A_raw[keep_idx, keep_idx]
+    }
   }
 
   ## Normalize weighted matrix (or just zero the diagonal)

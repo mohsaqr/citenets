@@ -18,6 +18,8 @@
 #' @param similarity Character. Normalization method. Default `"none"`.
 #' @param threshold Numeric. Minimum edge weight. Default 0.
 #' @param min_occur Integer. Minimum entity frequency. Default 1.
+#' @param top_n Integer or NULL. Return only the top n edges by weight.
+#'   Default NULL (all edges).
 #'
 #' @return A data frame with columns `from`, `to`, `weight`, `count`, `shared`.
 #'
@@ -47,7 +49,8 @@ conetwork <- function(data,
                        counting = "full",
                        similarity = "none",
                        threshold = 0,
-                       min_occur = 1L) {
+                       min_occur = 1L,
+                       top_n = NULL) {
   stopifnot(
     is.data.frame(data),
     "id" %in% names(data),
@@ -64,14 +67,15 @@ conetwork <- function(data,
     B <- build_bipartite(data, field = field, min_freq = min_occur)
     B <- apply_counting(B, counting = counting, network_type = "symmetric")
     multiply_bipartite(B, mode = "columns", similarity = similarity,
-                       threshold = threshold)
+                       threshold = threshold, top_n = top_n)
   } else {
     ## Entities linked by shared values from `by` field
     stopifnot(by %in% names(data))
     data <- ensure_list_column(data, by, sep)
     build_by_network(data, field = field, by = by,
                      counting = counting, similarity = similarity,
-                     threshold = threshold, min_occur = min_occur)
+                     threshold = threshold, min_occur = min_occur,
+                     top_n = top_n)
   }
 }
 
@@ -79,7 +83,7 @@ conetwork <- function(data,
 #' Build a network where entities share values from another field
 #' @keywords internal
 build_by_network <- function(data, field, by, counting, similarity,
-                              threshold, min_occur) {
+                              threshold, min_occur, top_n = NULL) {
   field_col <- data[[field]]
   by_col <- data[[by]]
 
@@ -138,7 +142,7 @@ build_by_network <- function(data, field, by, counting, similarity,
   B <- build_bipartite(agg_df, field = "values", min_freq = 1L)
   B <- apply_counting(B, counting = counting, network_type = "symmetric")
   multiply_bipartite(B, mode = "rows", similarity = similarity,
-                     threshold = threshold)
+                     threshold = threshold, top_n = top_n)
 }
 
 

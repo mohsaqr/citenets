@@ -11,6 +11,8 @@
 #' @param similarity Character. Similarity measure. Default `"none"`.
 #' @param threshold Numeric. Minimum edge weight. Default 1.
 #' @param min_occur Integer. Minimum keyword frequency. Default 1.
+#' @param top_n Integer or NULL. Return only the top n edges by weight.
+#'   Default NULL (all edges).
 #'
 #' @return A data frame with columns `from`, `to`, `weight`, `count`, `shared`.
 #'
@@ -24,7 +26,8 @@ keyword_network <- function(data,
                             counting = "full",
                             similarity = "none",
                             threshold = 1,
-                            min_occur = 1L) {
+                            min_occur = 1L,
+                            top_n = NULL) {
   stopifnot(
     is.data.frame(data),
     "id" %in% names(data),
@@ -38,5 +41,5 @@ keyword_network <- function(data,
   B <- build_bipartite(data, field = field, min_freq = min_occur)
   B <- apply_counting(B, counting = counting, network_type = "symmetric")
   multiply_bipartite(B, mode = "columns", similarity = similarity,
-                     threshold = threshold)
+                     threshold = threshold, top_n = top_n)
 }

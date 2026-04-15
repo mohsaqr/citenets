@@ -12,7 +12,8 @@ conetwork(
   counting = "full",
   similarity = "none",
   threshold = 0,
-  min_occur = 1L
+  min_occur = 1L,
+  top_n = NULL
 )
 }
 \arguments{
@@ -34,6 +35,9 @@ Default \code{";"}. Set to \code{NULL} if columns are already list-columns.}
 \item{threshold}{Numeric. Minimum edge weight. Default 0.}
 
 \item{min_occur}{Integer. Minimum entity frequency. Default 1.}
+
+\item{top_n}{Integer or NULL. Return only the top n edges by weight.
+Default NULL (all edges).}
 }
 \value{
 A data frame with columns \code{from}, \code{to}, \code{weight}, \code{count}, \code{shared}.
