@@ -81,9 +81,7 @@ read_scopus <- function(file, encoding = "UTF-8") {
     doi = get_col(col_map$doi),
     cited_by_count = as.integer(get_col(col_map$cited_by, 0L)),
     abstract = get_col(col_map$abstract),
-    affiliations = get_col(col_map$affiliations),
     type = get_col(col_map$type),
-    language = get_col(col_map$language),
     stringsAsFactors = FALSE
   )
 
@@ -96,8 +94,12 @@ read_scopus <- function(file, encoding = "UTF-8") {
   result$keywords <- split_field(get_col(col_map$keywords), sep = ";")
   result$keywords <- lapply(result$keywords, trimws)
 
+  ## Source-specific extras
   result$index_keywords <- split_field(get_col(col_map$index_kw), sep = ";")
   result$index_keywords <- lapply(result$index_keywords, trimws)
+
+  result$affiliations <- get_col(col_map$affiliations)
+  result$language <- get_col(col_map$language)
 
   result
 }

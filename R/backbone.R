@@ -45,20 +45,12 @@ backbone <- function(edges, alpha = 0.05) {
     return(edges)
   }
 
-  ## Build strength (sum of weights) and degree (number of edges) per node
-  ## from the undirected edge list
-  all_nodes <- unique(c(edges$from, edges$to))
-
-  ## Vectorised: compute strength and degree for every node at once
-  strength <- vapply(all_nodes, function(v) {
-    sum(edges$weight[edges$from == v | edges$to == v])
-  }, numeric(1L))
-  degree <- vapply(all_nodes, function(v) {
-    sum(edges$from == v | edges$to == v)
-  }, integer(1L))
-
-  names(strength) <- all_nodes
-  names(degree)   <- all_nodes
+  ## Strength and degree per node in one O(m) pass: double the edge list
+  ## so every node appears once as "from", then tapply aggregates.
+  node_both   <- c(edges$from, edges$to)
+  weight_both <- c(edges$weight, edges$weight)
+  strength <- tapply(weight_both, node_both, sum)
+  degree   <- tapply(rep(1L, length(node_both)), node_both, sum)
 
   ## Alpha from node i for edge (i,j): (1 - w/s_i)^(k_i - 1)
   ## Nodes with degree 1 always get alpha = 0 (always kept)
@@ -69,11 +61,14 @@ backbone <- function(edges, alpha = 0.05) {
     (1 - w / s) ^ (k - 1L)
   }
 
-  alpha_from <- mapply(compute_alpha, edges$from, edges$weight)
-  alpha_to   <- mapply(compute_alpha, edges$to,   edges$weight)
-
-  edge_alpha <- pmin(alpha_from, alpha_to)
+  edge_alpha <- pmin(
+    mapply(compute_alpha, edges$from, edges$weight),
+    mapply(compute_alpha, edges$to,   edges$weight)
+  )
 
   edges$alpha <- edge_alpha
-  edges[edge_alpha < alpha, ]
+  result <- edges[edge_alpha < alpha, ]
+  result <- result[order(-result$weight), ]
+  rownames(result) <- NULL
+  result
 }

@@ -61,7 +61,7 @@ read_crossref <- function(data) {
       family <- if ("family" %in% names(au)) au$family else character(0)
       given <- if ("given" %in% names(au)) au$given else ""
       ## Format as "FAMILY GIVEN"
-      paste(trimws(family), trimws(given))
+      standardize_authors(paste(trimws(family), trimws(given)))
     })
   } else {
     result$authors <- replicate(n, character(0), simplify = FALSE)
@@ -84,15 +84,15 @@ read_crossref <- function(data) {
           } else ""
           doi_refs[no_doi] <- paste(au, yr, jt)
         }
-        trimws(doi_refs)
+        standardize_refs(doi_refs)
       } else {
         ## No DOI column — use unstructured or construct
         if ("unstructured" %in% names(ref)) {
-          trimws(ref$unstructured)
+          standardize_refs(ref$unstructured)
         } else {
           au <- if ("author" %in% names(ref)) ref$author else ""
           yr <- if ("year" %in% names(ref)) ref$year else ""
-          trimws(paste(au, yr))
+          standardize_refs(paste(au, yr))
         }
       }
     })

@@ -97,15 +97,15 @@ read_ris <- function(file) {
     standardize_authors(au)
   })
 
+  ## No references in standard RIS
+  result$references <- replicate(n, character(0), simplify = FALSE)
+
   ## Keywords (KW tag, repeatable)
   result$keywords <- lapply(records, function(r) {
     kw <- r[["KW"]]
     if (is.null(kw)) return(character(0))
     trimws(kw)
   })
-
-  ## No references in standard RIS
-  result$references <- replicate(n, character(0), simplify = FALSE)
 
   result
 }

@@ -140,11 +140,8 @@ read_generic <- function(file, id = NULL, actors = NULL, sep = ";") {
 
   ## Split actor columns into list-columns
   if (!is.null(actors)) {
-    for (col in actors) {
-      if (col %in% names(data)) {
-        data[[col]] <- split_field(data[[col]], sep = sep)
-      }
-    }
+    cols <- intersect(actors, names(data))
+    data[cols] <- lapply(data[cols], split_field, sep = sep)
   }
 
   data
@@ -154,20 +151,16 @@ read_generic <- function(file, id = NULL, actors = NULL, sep = ";") {
 #' Resolve file paths from a file, vector of files, or directory
 #' @keywords internal
 resolve_paths <- function(path) {
-  files <- character(0)
-
-  for (p in path) {
+  unlist(lapply(path, function(p) {
     if (dir.exists(p)) {
-      ## Directory: find all common bibliometric file extensions
-      found <- list.files(p, pattern = "\\.(csv|txt|bib|ris|xlsx?)$",
-                           full.names = TRUE, ignore.case = TRUE)
-      files <- c(files, found)
+      list.files(p, pattern = "\\.(csv|txt|bib|ris|xlsx?)$",
+                 full.names = TRUE, ignore.case = TRUE)
     } else if (file.exists(p)) {
-      files <- c(files, p)
+      p
+    } else {
+      character(0)
     }
-  }
-
-  files
+  }), use.names = FALSE)
 }
 
 

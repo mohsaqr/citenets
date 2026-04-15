@@ -128,6 +128,9 @@ read_bibtex <- function(file) {
     standardize_authors(parts)
   })
 
+  ## References: not standard in BibTeX
+  result$references <- replicate(n, character(0), simplify = FALSE)
+
   ## Keywords
   result$keywords <- lapply(entries, function(e) {
     kw <- get_bib(e, "keywords")
@@ -135,9 +138,6 @@ read_bibtex <- function(file) {
     parts <- strsplit(kw, "[;,]")[[1]]
     trimws(parts)
   })
-
-  ## References: not standard in BibTeX
-  result$references <- replicate(n, character(0), simplify = FALSE)
 
   result
 }

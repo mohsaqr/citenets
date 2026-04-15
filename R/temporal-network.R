@@ -66,29 +66,19 @@ temporal_network <- function(data,
 
   windows <- build_windows(min_year, max_year, window, step, strategy)
 
-  results <- list()
-  for (i in seq_len(nrow(windows))) {
-    start <- windows$start[i]
-    end <- windows$end[i]
-    label <- windows$label[i]
-
+  window_list <- lapply(seq_len(nrow(windows)), function(i) {
     subset_data <- data[!is.na(data$year) &
-                          data$year >= start &
-                          data$year <= end, ]
-
-    if (nrow(subset_data) < 2) next
-
-    edges <- tryCatch(
-      network_fun(subset_data, ...),
-      error = function(e) NULL
-    )
-
+                          data$year >= windows$start[i] &
+                          data$year <= windows$end[i], ]
+    if (nrow(subset_data) < 2) return(NULL)
+    edges <- tryCatch(network_fun(subset_data, ...), error = function(e) NULL)
     if (!is.null(edges) && nrow(edges) > 0) {
-      results[[label]] <- edges
-    }
-  }
+      edges$window <- windows$label[i]
+      edges
+    } else NULL
+  })
 
-  results
+  Filter(Negate(is.null), stats::setNames(window_list, windows$label))
 }
 
 

@@ -1,3 +1,10 @@
+### 2026-04-16
+- [output standardization]: Standard column order for all readers is: `id`, `title`, `year`, `journal`, `doi`, `cited_by_count`, `abstract`, `type`, then list-columns `authors`, `references`, `keywords`, then source-specific extras. Extras include `index_keywords`, `affiliations`, `language` (Scopus), `keywords_plus` (WoS), `affiliations`/`countries` (Dimensions).
+- [empty result schema]: `empty_biblio_df()` now includes `authors`, `references`, `keywords` list-columns so empty and non-empty results share the same schema.
+- [temporal_network window column]: Each edge data.frame in the temporal_network list now has a `window` column so `do.call(rbind, result)` is immediately interpretable.
+- [local_citations column order]: Output order is `id`, `lcs`, `gcs` (if cited_by_count present), `year`, `title`, `journal`, `doi`. Year is always coerced to integer.
+- [backbone/prune sorting]: Both now sort by `weight` descending after filtering and reset rownames.
+
 ### 2026-04-15
 - [bibliometrix cocMatrix]: Simple ref strings like "REF1" produce empty matrices. Must use WoS-style "AUTHOR YEAR JOURNAL" format for cocMatrix to parse correctly.
 - [bibliometrix biblioNetwork]: Requires `DB` column in data frame, crashes without it.

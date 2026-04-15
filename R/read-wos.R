@@ -190,7 +190,7 @@ read_wos_tab <- function(file) {
 
 #' @keywords internal
 empty_biblio_df <- function() {
-  data.frame(
+  result <- data.frame(
     id = character(0),
     title = character(0),
     year = integer(0),
@@ -201,4 +201,8 @@ empty_biblio_df <- function() {
     type = character(0),
     stringsAsFactors = FALSE
   )
+  result$authors <- list()
+  result$references <- list()
+  result$keywords <- list()
+  result
 }

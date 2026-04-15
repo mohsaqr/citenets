@@ -48,14 +48,14 @@ local_citations <- function(data) {
     stringsAsFactors = FALSE
   )
 
-  ## Add GCS if available
+  ## Add metadata columns in canonical order: gcs, year, title, journal, doi
   if ("cited_by_count" %in% names(data)) {
     result$gcs <- as.integer(data[["cited_by_count"]])
   }
-
-  ## Add metadata columns if present
-  for (col in c("title", "year", "journal", "doi")) {
-    if (col %in% names(data)) result[[col]] <- data[[col]]
+  for (col in c("year", "title", "journal", "doi")) {
+    if (col %in% names(data)) {
+      result[[col]] <- if (col == "year") as.integer(data[[col]]) else data[[col]]
+    }
   }
 
   result <- result[order(-result$lcs), ]
@@ -105,9 +105,19 @@ historiograph <- function(data, n = 30, min_lcs = 1) {
   lcs_df <- lcs_df[lcs_df$lcs >= min_lcs, ]
 
   if (nrow(lcs_df) == 0) {
+    empty_nodes <- data.frame(
+      id = character(0), lcs = integer(0), gcs = integer(0),
+      year = integer(0), title = character(0),
+      journal = character(0), doi = character(0),
+      stringsAsFactors = FALSE
+    )
+    ## Drop columns absent from the input
+    keep_cols <- c("id", "lcs",
+                   if ("cited_by_count" %in% names(data)) "gcs",
+                   "year",
+                   intersect(c("title", "journal", "doi"), names(data)))
     return(list(
-      nodes = data.frame(id = character(0), lcs = integer(0),
-                          year = integer(0), stringsAsFactors = FALSE),
+      nodes = empty_nodes[, keep_cols, drop = FALSE],
       edges = data.frame(from = character(0), to = character(0),
                           year_from = integer(0), year_to = integer(0),
                           stringsAsFactors = FALSE)
@@ -134,15 +144,9 @@ historiograph <- function(data, n = 30, min_lcs = 1) {
   citing <- rep(ids, lengths(refs_list))
   cited <- unlist(refs_list, use.names = FALSE)
 
-  ## Keep edges where cited is in node_ids
-  keep <- !is.na(cited) & cited %in% node_ids
+  keep <- !is.na(cited) & cited %in% node_ids & citing %in% ids
   citing <- citing[keep]
-  cited <- cited[keep]
-
-  ## Also keep only if citing is in the dataset
-  keep <- citing %in% ids
-  citing <- citing[keep]
-  cited <- cited[keep]
+  cited  <- cited[keep]
 
   if (length(citing) == 0) {
     edges <- data.frame(from = character(0), to = character(0),

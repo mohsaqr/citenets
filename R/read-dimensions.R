@@ -37,12 +37,12 @@ read_dimensions <- function(file, encoding = "UTF-8") {
                    "Countries of Research organization")
   )
 
+  lower_names <- tolower(names(raw))
   find_col <- function(candidates) {
-    for (cand in candidates) {
-      idx <- match(tolower(cand), tolower(names(raw)))
-      if (!is.na(idx)) return(names(raw)[idx])
-    }
-    NA_character_
+    idx <- match(tolower(candidates), lower_names)
+    idx <- idx[!is.na(idx)]
+    if (length(idx) == 0L) return(NA_character_)
+    names(raw)[idx[1L]]
   }
 
   get_col <- function(candidates, default = NA_character_) {
@@ -66,21 +66,21 @@ read_dimensions <- function(file, encoding = "UTF-8") {
     cited_by_count = as.integer(get_col(col_map$cited_by, 0L)),
     abstract = get_col(col_map$abstract),
     type = get_col(col_map$type),
-    affiliations = get_col(col_map$affiliations),
     stringsAsFactors = FALSE
   )
 
   ## Authors: semicolon-delimited
-  result$authors <- split_field(get_col(col_map$authors), sep = ";")
+  result$authors <- lapply(
+    split_field(get_col(col_map$authors), sep = ";"),
+    standardize_authors
+  )
 
   ## References: Dimensions uses semicolons before brackets or just semicolons
   refs_raw <- get_col(col_map$refs)
   result$references <- lapply(refs_raw, function(r) {
     if (is.na(r) || nchar(trimws(r)) == 0) return(character(0))
-    ## Strip bracket notation if present: [Author | ID | Source | Year | ...]
     r <- gsub("\\[([^]]+)\\]", "\\1", r)
-    parts <- strsplit(r, ";")[[1]]
-    trimws(parts)
+    standardize_refs(strsplit(r, ";")[[1]])
   })
 
   ## Keywords: Dimensions may have "Fields of Study" or "Research Categories"
@@ -88,7 +88,8 @@ read_dimensions <- function(file, encoding = "UTF-8") {
                         "Research Categories"))
   result$keywords <- split_field(kw_raw, sep = ";")
 
-  ## Countries
+  ## Source-specific extras
+  result$affiliations <- get_col(col_map$affiliations)
   result$countries <- split_field(get_col(col_map$countries), sep = ";")
 
   result
