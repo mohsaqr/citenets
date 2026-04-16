@@ -1,3 +1,21 @@
+### 2026-04-16 — Production-readiness pass (v0.3.0, part 2)
+- R/source-network.R, country-network.R, institution-network.R, co-network.R: Wired `as_citenets_network()` into all 4 remaining network builders; now all 8 return a stamped `citenets_network` S3 object
+- tests/testthat/test-backbone.R: 8 tests for Serrano disparity filter including alpha value correctness, degree-1 node guarantee, sort order
+- tests/testthat/test-prune.R: 9 tests for threshold and top_n pruning with column preservation
+- tests/testthat/test-historiograph.R: 12 tests for local_citations() (LCS counts, metadata columns) and historiograph() (top-n selection, edge structure, min_lcs filter)
+- tests/testthat/test-temporal-network.R: 10 tests for temporal_network() and build_windows() — all three strategies, string name resolution, year range correctness
+- tests/testthat/test-filter.R: 6 tests for filter_top()
+- tests/testthat/test-converters.R: 17 tests for to_gephi(), to_graphml(), to_matrix() — file writing, column names, XML content, symmetry
+- tests/testthat/test-remaining-networks.R: 21 tests for source/country/institution/conetwork — S3 class, correct nodes, attribute metadata
+- tests/testthat/test-methods.R: 11 tests for citenets_network S3 methods, attribute stamping, print/summary output
+- vignettes/citenets.Rmd: Getting started vignette covering all major features
+- .github/workflows/R-CMD-check.yml: CI on macOS/Windows/Ubuntu × R release/devel/oldrel-1
+- README.md: Updated with v0.3.0 features, comparison table, badges, references
+- DESCRIPTION: Added bibliometrix, knitr, rmarkdown to Suggests; added VignetteBuilder: knitr
+- .Rbuildignore: Added .claude directory
+- R/methods.R: Added @importFrom utils head to suppress R CMD check NOTE
+- Tests: 499 passing, 0 failing
+
 ### 2026-04-15 — Initial package build (v0.1.0)
 - DESCRIPTION, LICENSE, NAMESPACE: Package skeleton with MIT license, R >= 4.1.0, Matrix dep
 - R/bipartite.R: Two-mode matrix construction engine (Batagelj & Cerinsek 2013)

@@ -1,6 +1,6 @@
 #' Convert Crossref API data to citenets format
 #'
-#' Takes the output of [rcrossref::cr_works()] (the `$data` tibble/data frame)
+#' Takes the output of `rcrossref::cr_works()` (the `$data` tibble/data frame)
 #' and converts it to the standardized citenets format.
 #'
 #' @param data A data frame from `cr_works(...)$data`.

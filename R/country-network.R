@@ -37,7 +37,7 @@ country_network <- function(data,
                     "inclusion", "equivalence")
   )
 
-  if (type == "collaboration") {
+  result <- if (type == "collaboration") {
     B <- build_bipartite(data, field = "countries", min_freq = min_occur)
     B <- apply_counting(B, counting = counting, network_type = "symmetric")
     multiply_bipartite(B, mode = "columns", similarity = similarity,
@@ -52,9 +52,12 @@ country_network <- function(data,
     multiply_bipartite(B, mode = "rows", similarity = similarity,
                        threshold = threshold, top_n = top_n)
 
-  } else if (type == "equivalence") {
+  } else {
     B <- build_bipartite(data, field = "countries", min_freq = min_occur)
     multiply_bipartite(B, mode = "columns", similarity = "cosine",
                        threshold = threshold, top_n = top_n)
   }
+
+  as_citenets_network(result, network_type = paste0("country_", type),
+                      counting = counting, similarity = similarity)
 }

@@ -42,7 +42,7 @@ reference_network <- function(data,
 
   B <- build_bipartite(data, field = "references", min_freq = min_occur)
 
-  if (type == "equivalence") {
+  result <- if (type == "equivalence") {
     multiply_bipartite(B, mode = "columns", similarity = "cosine",
                        threshold = threshold, top_n = top_n)
   } else {
@@ -50,4 +50,6 @@ reference_network <- function(data,
     multiply_bipartite(B, mode = "columns", similarity = similarity,
                        threshold = threshold, top_n = top_n)
   }
+  as_citenets_network(result, network_type = paste0("reference_", type),
+                      counting = counting, similarity = similarity)
 }

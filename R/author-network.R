@@ -74,15 +74,13 @@ author_network <- function(data,
 
   is_positional <- counting %in% position_dependent_counts()
 
-  if (type == "collaboration") {
+  result <- if (type == "collaboration") {
     if (is_positional) {
       B <- build_author_bipartite(
         data, counting = counting,
         position_weights = position_weights,
         first_last_weight = first_last_weight
       )
-      ## For positional: B already carries weights, multiply directly
-      ## Measure "cosine" for equivalence type
       m <- if (type == "equivalence") "cosine" else similarity
       multiply_bipartite(B, mode = "columns", similarity = m,
                          threshold = threshold, top_n = top_n)
@@ -117,10 +115,13 @@ author_network <- function(data,
     multiply_bipartite(B, mode = "columns", similarity = similarity,
                        threshold = threshold, top_n = top_n)
 
-  } else if (type == "equivalence") {
+  } else {
     B <- build_bipartite(data, field = "authors", min_freq = min_occur)
-    ## Equivalence = cosine similarity of full profiles
     multiply_bipartite(B, mode = "columns", similarity = "cosine",
                        threshold = threshold, top_n = top_n)
   }
+
+  as_citenets_network(result,
+    network_type = paste0("author_", type),
+    counting = counting, similarity = similarity)
 }

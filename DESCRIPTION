@@ -1,6 +1,6 @@
 Package: citenets
 Title: Citation, Co-Citation, and Bibliometric Network Construction
-Version: 0.2.0
+Version: 0.3.0
 Authors@R:
     person("Mohammed", "Saqr", , "saqr@saqr.me", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-5881-3109"))
@@ -13,7 +13,10 @@ Description: Constructs bibliometric networks from scholarly data using
     multiplication. Normalizations include association strength (van Eck &
     Waltman, 2009), Salton's cosine, Jaccard, inclusion index, and
     equivalence index. Reads Scopus, Web of Science, OpenAlex, BibTeX,
-    RIS, and Lens.org formats.
+    RIS, Lens.org, Dimensions, and Crossref formats. Additional tools
+    include temporal network analysis, historiograph construction, backbone
+    extraction (Serrano et al., 2009), and export to Gephi, GraphML, and
+    cograph.
 License: MIT + file LICENSE
 URL: https://github.com/mohsaqr/citenets
 BugReports: https://github.com/mohsaqr/citenets/issues
@@ -24,10 +27,16 @@ Imports:
     stats,
     utils
 Suggests:
+    bibliometrix,
+    cograph,
     igraph,
+    knitr,
     openalexR,
+    rcrossref,
+    rmarkdown,
     testthat (>= 3.0.0),
     tidygraph
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true

@@ -260,48 +260,61 @@ to_graphml <- function(edges, nodes = NULL, file = NULL, directed = FALSE) {
 
 #' Prepare network for cograph::splot()
 #'
-#' Converts a citenets edge list to an igraph object with node metadata
-#' attached as vertex attributes, ready to pass directly to
-#' `cograph::splot()`.
+#' Converts a citenets edge list to a `cograph_network` object by calling
+#' `cograph::as_cograph()`. Optionally merges node metadata (e.g., from
+#' [local_citations()]) into the network's node table so attributes like
+#' `lcs` or `year` can be used directly in `splot()` aesthetic parameters
+#' (e.g., `node_size = "lcs"`).
+#'
+#' Note: citenets edge lists (`from`, `to`, `weight`) are accepted directly
+#' by `cograph::splot()` without conversion. This function is only needed
+#' when you want to attach node-level metadata.
 #'
 #' @param edges A data frame with at least `from`, `to`, `weight` columns.
 #' @param nodes Optional data frame of node attributes with an `id` column
-#'   (e.g., output of [local_citations()]). All columns are added as vertex
-#'   attributes.
+#'   (e.g., output of [local_citations()]). All columns are merged into the
+#'   `cograph_network$nodes` table and become available as aesthetic mappings.
 #' @param directed Logical. Default `FALSE`.
 #'
-#' @return An igraph object.
+#' @return A `cograph_network` object (S3 list with `$nodes` and `$edges`).
 #'
 #' @export
 #' @examples
 #' \dontrun{
 #' data(biblio_data)
+#'
+#' # Without metadata: splot() accepts citenets edges directly
 #' edges <- author_network(biblio_data, "collaboration")
-#' nodes <- local_citations(biblio_data)
-#' g <- to_cograph(edges, nodes = nodes)
-#' cograph::splot(g)
+#' cograph::splot(edges)
+#'
+#' # With metadata: document network + local citation scores as node size
+#' edges <- document_network(biblio_data, type = "coupling")
+#' nodes <- local_citations(biblio_data)   # keyed by document id
+#' net   <- to_cograph(edges, nodes = nodes)
+#' cograph::splot(net, node_size = "lcs", labels = TRUE)
 #' }
 to_cograph <- function(edges, nodes = NULL, directed = FALSE) {
-  if (!requireNamespace("igraph", quietly = TRUE)) {
-    stop("Package 'igraph' is required. Install it with: ",
-         "install.packages('igraph')", call. = FALSE)
+  if (!requireNamespace("cograph", quietly = TRUE)) {
+    stop("Package 'cograph' is required. Install it with: ",
+         'install.packages("cograph", repos = "https://mohsaqr.r-universe.dev")',
+         call. = FALSE)
   }
   stopifnot(
     is.data.frame(edges),
     all(c("from", "to", "weight") %in% names(edges))
   )
 
-  g <- igraph::graph_from_data_frame(edges, directed = directed)
+  net <- cograph::as_cograph(edges, directed = directed)
 
   if (!is.null(nodes)) {
     stopifnot(is.data.frame(nodes), "id" %in% names(nodes))
-    vnames <- igraph::V(g)$name
+    ## Match node metadata by label (cograph stores node names in $nodes$label)
     attr_cols <- setdiff(names(nodes), "id")
+    idx <- match(net$nodes$label, nodes$id)
     for (col in attr_cols) {
-      vals <- nodes[[col]][match(vnames, nodes$id)]
-      g <- igraph::set_vertex_attr(g, col, value = vals)
+      net$nodes[[col]] <- nodes[[col]][idx]
     }
   }
 
-  g
+  net
 }

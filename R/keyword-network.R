@@ -40,6 +40,8 @@ keyword_network <- function(data,
 
   B <- build_bipartite(data, field = field, min_freq = min_occur)
   B <- apply_counting(B, counting = counting, network_type = "symmetric")
-  multiply_bipartite(B, mode = "columns", similarity = similarity,
-                     threshold = threshold, top_n = top_n)
+  result <- multiply_bipartite(B, mode = "columns", similarity = similarity,
+                               threshold = threshold, top_n = top_n)
+  as_citenets_network(result, network_type = "keyword_co_occurrence",
+                      counting = counting, similarity = similarity)
 }

@@ -62,7 +62,7 @@ conetwork <- function(data,
 
   data <- ensure_list_column(data, field, sep)
 
-  if (is.null(by)) {
+  result <- if (is.null(by)) {
     ## Co-occurrence within one field (same document)
     B <- build_bipartite(data, field = field, min_freq = min_occur)
     B <- apply_counting(B, counting = counting, network_type = "symmetric")
@@ -77,6 +77,14 @@ conetwork <- function(data,
                      threshold = threshold, min_occur = min_occur,
                      top_n = top_n)
   }
+
+  net_type <- if (is.null(by)) {
+    paste0(field, "_co_occurrence")
+  } else {
+    paste0(field, "_by_", by)
+  }
+  as_citenets_network(result, network_type = net_type,
+                      counting = counting, similarity = similarity)
 }
 
 

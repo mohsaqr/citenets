@@ -1,0 +1,254 @@
+---
+title: "Getting Started with citenets"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with citenets}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(citenets)
+data(biblio_data)
+```
+
+## Reading data
+
+citenets reads all major bibliometric formats. Auto-detect with `read_biblio()`:
+
+```{r, eval = FALSE}
+data <- read_biblio("export.csv")       # Scopus, WoS, Dimensions, Lens, BibTeX, RIS
+data <- read_scopus("scopus.csv")       # Scopus CSV
+data <- read_wos("savedrecs.txt")       # Web of Science full-record export
+data <- read_openalex("works.csv")      # OpenAlex CSV download
+data <- read_lens("lens.csv")           # Lens.org CSV export
+data <- read_bibtex("refs.bib")         # BibTeX file
+data <- read_ris("refs.ris")            # RIS file
+data <- read_dimensions("dims.csv")     # Dimensions CSV
+```
+
+## Building networks
+
+### Author networks
+
+```{r}
+# Co-authorship with full counting (default)
+collab <- author_network(biblio_data, "collaboration")
+collab
+
+# Harmonic counting — downweights non-first authors
+author_network(biblio_data, "collaboration", counting = "harmonic")
+
+# Bibliographic coupling — authors who cite the same references
+author_network(biblio_data, "coupling")
+```
+
+### Keyword co-occurrence
+
+```{r}
+kw <- keyword_network(biblio_data)
+kw
+
+# With association strength normalization
+keyword_network(biblio_data, similarity = "association")
+```
+
+### Document networks
+
+```{r}
+# Bibliographic coupling
+document_network(biblio_data, "coupling")
+
+# Co-citation
+document_network(biblio_data, "co_citation")
+
+# Direct citation (directed edges, internal only)
+document_network(biblio_data, "citation")
+```
+
+### Reference co-citation
+
+```{r}
+reference_network(biblio_data, similarity = "association")
+```
+
+### Source, country, institution
+
+```{r, eval = FALSE}
+source_network(data, "coupling")
+country_network(data, "collaboration")
+institution_network(data, "collaboration")
+```
+
+### Generic conetwork
+
+`conetwork()` builds any co-occurrence or bipartite-projected network from
+any column without a pre-defined function:
+
+```{r}
+# Keywords appearing in the same document
+conetwork(biblio_data, "keywords")
+
+# Authors linked by shared keywords
+conetwork(biblio_data, "authors", by = "keywords")
+
+# Works with semicolon-delimited string columns too
+d <- data.frame(id = 1:3, tags = c("ml; dl", "ml; nlp", "dl; nlp"))
+conetwork(d, "tags")
+```
+
+## Counting methods
+
+citenets implements 13 counting methods. The first 4 are
+**position-independent** and work for all network types. The remaining 9 are
+**position-dependent** and apply fractional credit based on byline order
+(collaboration networks only).
+
+| Method | Description |
+|---|---|
+| `"full"` | Each co-occurrence counts as 1 |
+| `"fractional"` | Weight = 1 / (k_i × k_j) |
+| `"paper"` | Weight = 1 / k_i (paper normalised) |
+| `"strength"` | Weight = 1 / k |
+| `"harmonic"` | Credit ∝ 1/position (Hagen 2008) |
+| `"arithmetic"` | Credit ∝ (n − pos + 1) / sum |
+| `"geometric"` | Credit ∝ 2^(n − pos) / sum (Liu & Fang 2023) |
+| `"adaptive_geometric"` | Geometric, adapted to author count |
+| `"golden"` | Credit ∝ φ^(n − pos) |
+| `"first"` | Credit = 1 for first author, 0 for others |
+| `"last"` | Credit = 1 for last author, 0 for others |
+| `"first_last"` | First and last authors upweighted |
+| `"position_weighted"` | Custom weight vector |
+
+```{r}
+author_network(biblio_data, "collaboration", counting = "geometric")
+author_network(biblio_data, "collaboration", counting = "first_last",
+               first_last_weight = 2)
+```
+
+## Similarity (normalization) measures
+
+```{r}
+# Association strength (van Eck & Waltman 2009)
+keyword_network(biblio_data, similarity = "association")
+
+# Salton cosine
+keyword_network(biblio_data, similarity = "cosine")
+
+# Jaccard, inclusion, equivalence also available
+keyword_network(biblio_data, similarity = "jaccard")
+```
+
+## Reducing networks
+
+### Backbone extraction (Serrano disparity filter)
+
+The disparity filter keeps edges that are statistically significant for at
+least one of their endpoints — preserving the multiscale structure of weighted
+networks rather than cutting by a global threshold.
+
+```{r}
+edges <- author_network(biblio_data, "collaboration")
+backbone(edges, alpha = 0.05)
+```
+
+### Pruning
+
+```{r}
+edges <- keyword_network(biblio_data)
+
+# Global weight threshold
+prune(edges, method = "threshold", value = 2)
+
+# Top-k neighbours per node
+prune(edges, method = "top_n", value = 3)
+```
+
+### Filter to top nodes
+
+```{r}
+filter_top(edges, n = 5)
+```
+
+## Temporal networks
+
+```{r}
+# Fixed 3-year windows
+tn <- temporal_network(biblio_data, author_network, "collaboration", window = 3)
+names(tn)
+
+# Each element is a standard edge data frame
+if (length(tn) > 0) tn[[1]]
+
+# Cumulative windows
+temporal_network(biblio_data, keyword_network, window = 2,
+                 strategy = "cumulative")
+```
+
+## Historiograph
+
+The historiograph shows which locally cited documents cite each other,
+laid out chronologically — the classic Garfield citation history.
+
+```{r}
+h <- historiograph(biblio_data, n = 10, min_lcs = 1)
+
+# Node table: top-cited documents with metadata
+head(h$nodes)
+
+# Edge table: directed citation links
+head(h$edges)
+
+# Local citation scores for the full dataset
+head(local_citations(biblio_data))
+```
+
+## Exporting networks
+
+```{r}
+edges <- keyword_network(biblio_data)
+
+# Adjacency matrix
+m <- to_matrix(edges)
+m[1:4, 1:4]
+
+# Gephi (returns list; pass file = "dir/" to write CSVs)
+gephi <- to_gephi(edges)
+head(gephi$edges)
+
+# GraphML string (pass file = "out.graphml" to write)
+xml <- to_graphml(edges)
+cat(substr(xml, 1, 200))
+
+# igraph (requires igraph package)
+# g <- to_igraph(edges)
+
+# cograph (requires cograph package)
+# net <- to_cograph(edges)
+```
+
+## S3 methods
+
+All network functions return a `citenets_network` object — a data frame
+subclass that carries metadata as attributes.
+
+```{r}
+edges <- author_network(biblio_data, "collaboration", counting = "harmonic")
+
+# Print shows a summary header
+print(edges)
+
+# Summary shows network statistics
+summary(edges)
+
+# Metadata accessible via attr()
+attr(edges, "network_type")
+attr(edges, "counting")
+```

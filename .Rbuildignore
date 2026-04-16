@@ -5,6 +5,7 @@
 ^HANDOFF\.md$
 ^CHANGES\.md$
 ^CLAUDE\.md$
+^\.claude$
 ^\.github$
 ^tmp$
 ^tutorials$

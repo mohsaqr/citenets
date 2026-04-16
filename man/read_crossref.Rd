@@ -13,7 +13,7 @@ read_crossref(data)
 A data frame with the same column structure as \code{\link[=read_scopus]{read_scopus()}}.
 }
 \description{
-Takes the output of \code{\link[rcrossref:cr_works]{rcrossref::cr_works()}} (the \verb{$data} tibble/data frame)
+Takes the output of \code{rcrossref::cr_works()} (the \verb{$data} tibble/data frame)
 and converts it to the standardized citenets format.
 }
 \examples{

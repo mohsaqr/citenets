@@ -37,7 +37,7 @@ source_network <- function(data,
                     "inclusion", "equivalence")
   )
 
-  if (type == "coupling") {
+  result <- if (type == "coupling") {
     stopifnot("journal" %in% names(data), "references" %in% names(data))
     agg <- aggregate_by_entity(data, entity_field = "journal",
                                 value_field = "references")
@@ -59,7 +59,7 @@ source_network <- function(data,
     multiply_bipartite(B, mode = "columns", similarity = similarity,
                        threshold = threshold, top_n = top_n)
 
-  } else if (type == "equivalence") {
+  } else {
     stopifnot("journal" %in% names(data), "references" %in% names(data))
     agg <- aggregate_by_entity(data, entity_field = "journal",
                                 value_field = "references")
@@ -67,4 +67,7 @@ source_network <- function(data,
     multiply_bipartite(B, mode = "rows", similarity = "cosine",
                        threshold = threshold, top_n = top_n)
   }
+
+  as_citenets_network(result, network_type = paste0("source_", type),
+                      counting = counting, similarity = similarity)
 }

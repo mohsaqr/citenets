@@ -47,34 +47,32 @@ document_network <- function(data,
                     "inclusion", "equivalence")
   )
 
-  if (type == "citation") {
+  result <- if (type == "citation") {
     edges <- build_direct_citation(data)
     if (!is.null(top_n) && nrow(edges) > 0) {
-      ## Top-n nodes by frequency (cited + citing count)
-      all_nodes <- c(edges$from, edges$to)
-      freq <- sort(table(all_nodes), decreasing = TRUE)
+      freq <- sort(table(c(edges$from, edges$to)), decreasing = TRUE)
       top_nodes <- names(freq)[seq_len(min(top_n, length(freq)))]
       edges <- edges[edges$from %in% top_nodes & edges$to %in% top_nodes, ]
     }
-    return(edges)
+    edges
+  } else {
+    B <- build_bipartite(data, field = "references", min_freq = min_occur)
+    if (type == "coupling") {
+      B <- apply_counting(B, counting = counting, network_type = "coupling")
+      multiply_bipartite(B, mode = "rows", similarity = similarity,
+                         threshold = threshold, top_n = top_n)
+    } else if (type == "co_citation") {
+      B <- apply_counting(B, counting = counting, network_type = "symmetric")
+      multiply_bipartite(B, mode = "columns", similarity = similarity,
+                         threshold = threshold, top_n = top_n)
+    } else {
+      multiply_bipartite(B, mode = "rows", similarity = "cosine",
+                         threshold = threshold, top_n = top_n)
+    }
   }
 
-  B <- build_bipartite(data, field = "references", min_freq = min_occur)
-
-  if (type == "coupling") {
-    B <- apply_counting(B, counting = counting, network_type = "coupling")
-    multiply_bipartite(B, mode = "rows", similarity = similarity,
-                       threshold = threshold, top_n = top_n)
-
-  } else if (type == "co_citation") {
-    B <- apply_counting(B, counting = counting, network_type = "symmetric")
-    multiply_bipartite(B, mode = "columns", similarity = similarity,
-                       threshold = threshold, top_n = top_n)
-
-  } else if (type == "equivalence") {
-    multiply_bipartite(B, mode = "rows", similarity = "cosine",
-                       threshold = threshold, top_n = top_n)
-  }
+  as_citenets_network(result, network_type = paste0("document_", type),
+                      counting = counting, similarity = similarity)
 }
 
 

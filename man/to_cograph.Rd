@@ -10,25 +10,38 @@ to_cograph(edges, nodes = NULL, directed = FALSE)
 \item{edges}{A data frame with at least \code{from}, \code{to}, \code{weight} columns.}
 
 \item{nodes}{Optional data frame of node attributes with an \code{id} column
-(e.g., output of \code{\link[=local_citations]{local_citations()}}). All columns are added as vertex
-attributes.}
+(e.g., output of \code{\link[=local_citations]{local_citations()}}). All columns are merged into the
+\code{cograph_network$nodes} table and become available as aesthetic mappings.}
 
 \item{directed}{Logical. Default \code{FALSE}.}
 }
 \value{
-An igraph object.
+A \code{cograph_network} object (S3 list with \verb{$nodes} and \verb{$edges}).
 }
 \description{
-Converts a citenets edge list to an igraph object with node metadata
-attached as vertex attributes, ready to pass directly to
-\code{cograph::splot()}.
+Converts a citenets edge list to a \code{cograph_network} object by calling
+\code{cograph::as_cograph()}. Optionally merges node metadata (e.g., from
+\code{\link[=local_citations]{local_citations()}}) into the network's node table so attributes like
+\code{lcs} or \code{year} can be used directly in \code{splot()} aesthetic parameters
+(e.g., \code{node_size = "lcs"}).
+}
+\details{
+Note: citenets edge lists (\code{from}, \code{to}, \code{weight}) are accepted directly
+by \code{cograph::splot()} without conversion. This function is only needed
+when you want to attach node-level metadata.
 }
 \examples{
 \dontrun{
 data(biblio_data)
+
+# Without metadata: splot() accepts citenets edges directly
 edges <- author_network(biblio_data, "collaboration")
-nodes <- local_citations(biblio_data)
-g <- to_cograph(edges, nodes = nodes)
-cograph::splot(g)
+cograph::splot(edges)
+
+# With metadata: document network + local citation scores as node size
+edges <- document_network(biblio_data, type = "coupling")
+nodes <- local_citations(biblio_data)   # keyed by document id
+net   <- to_cograph(edges, nodes = nodes)
+cograph::splot(net, node_size = "lcs", labels = TRUE)
 }
 }
