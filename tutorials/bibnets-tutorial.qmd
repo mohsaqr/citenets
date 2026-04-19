@@ -1,5 +1,5 @@
 ---
-title: "citenets: Citation and Bibliometric Network Construction in R"
+title: "bibnets: Citation and Bibliometric Network Construction in R"
 subtitle: "A Comprehensive Tutorial with Equivalence Testing"
 author: "Mohammed Saqr"
 date: today
@@ -17,13 +17,13 @@ execute:
   message: false
 ---
 
-## 1. Why citenets?
+## 1. Why bibnets?
 
 Bibliometric network analysis requires constructing networks from scholarly data — who collaborates with whom, which papers are cited together, what keywords co-occur. Existing tools either bundle everything into a monolithic package with 87+ dependencies (bibliometrix) or cover only fragments of the problem (biblionetwork).
 
-citenets fills the gap: **network construction only**, with state-of-the-art counting and normalization methods, minimal dependencies, and an intuitive API.
+bibnets fills the gap: **network construction only**, with state-of-the-art counting and normalization methods, minimal dependencies, and an intuitive API.
 
-| Feature | citenets | bibliometrix | biblionetwork |
+| Feature | bibnets | bibliometrix | biblionetwork |
 |---------|----------|--------------|---------------|
 | **Counting methods** | 13 | 1 (full) | 3 |
 | **Similarity measures** | 6 | 5 | 1 (cosine) |
@@ -38,7 +38,7 @@ devtools::load_all("..")
 
 ## 2. Reading Bibliometric Data
 
-citenets reads data from six sources into a unified tidy format: every reader returns the same column structure with human-readable names and list-columns for multi-valued fields.
+bibnets reads data from six sources into a unified tidy format: every reader returns the same column structure with human-readable names and list-columns for multi-valued fields.
 
 ### 2.1 From Scopus CSV
 
@@ -82,7 +82,7 @@ data <- read_lens("lens_export.csv")
 
 ## 3. Network Types
 
-citenets builds seven types of entity networks plus a generic co-occurrence function.
+bibnets builds seven types of entity networks plus a generic co-occurrence function.
 
 ### 3.1 Author Collaboration Network
 
@@ -94,7 +94,7 @@ edges <- author_network(biblio_data, "collaboration")
 edges
 ```
 
-Each row is an edge. `weight` = co-authorship count, `count` = raw count, `shared` = number of shared papers.
+Each row is an edge. `weight` = co-authorship strength (adjusted by counting method), `count` = raw number of papers contributing to the link.
 
 ### 3.2 Reference Co-citation Network
 
@@ -155,7 +155,7 @@ Each supports types: `"collaboration"`, `"coupling"`, `"co_citation"`, `"equival
 
 ## 4. Counting Methods — The Core Innovation
 
-Counting methods determine how credit is distributed among co-authors or how co-occurrences are weighted. citenets implements 13 methods — 9 more than any other R package.
+Counting methods determine how credit is distributed among co-authors or how co-occurrences are weighted. bibnets implements 13 methods — 9 more than any other R package.
 
 ### 4.1 Position-Independent Methods (4)
 
@@ -423,11 +423,11 @@ cat("Matrix:", nrow(A), "x", ncol(A), "\n")
 tg <- to_tbl_graph(edges)
 ```
 
-## 8. Equivalence Testing — citenets vs bibliometrix vs biblionetwork
+## 8. Equivalence Testing — bibnets vs bibliometrix vs biblionetwork
 
-The following sections verify that citenets produces numerically identical results to established packages.
+The following sections verify that bibnets produces numerically identical results to established packages.
 
-### 8.1 Co-authorship: citenets vs bibliometrix
+### 8.1 Co-authorship: bibnets vs bibliometrix
 
 ```{r}
 #| label: equiv-coauth-bm
@@ -450,7 +450,7 @@ M_bm <- data.frame(
   DB = rep("ISI", 5), stringsAsFactors = FALSE
 )
 
-# citenets
+# bibnets
 A_cn <- as.matrix(to_matrix(author_network(d_cn, "collaboration")))
 
 # bibliometrix
@@ -463,7 +463,7 @@ max_diff <- max(abs(A_cn[common, common] - A_bm[common, common]))
 cat("Max difference:", max_diff, "\n")
 ```
 
-### 8.2 Co-authorship Full Counting: citenets vs biblionetwork
+### 8.2 Co-authorship Full Counting: bibnets vs biblionetwork
 
 ```{r}
 #| label: equiv-coauth-full
@@ -480,25 +480,25 @@ d$authors <- list(c("A","B","C"), c("A","B"), c("B","C","D"))
 # biblionetwork
 bn <- as.data.frame(coauth_network(auth_long, authors = "author",
                                     articles = "article", method = "full_counting"))
-# citenets
+# bibnets
 cn <- author_network(d, "collaboration", counting = "full")
 
 # Compare
 comparison <- merge(
   cn[, c("from", "to", "weight")],
   bn[, c("from", "to", "weight")],
-  by = c("from", "to"), suffixes = c(".citenets", ".biblionetwork")
+  by = c("from", "to"), suffixes = c(".bibnets", ".biblionetwork")
 )
 if (nrow(comparison) == 0) {
   bn2 <- bn; names(bn2)[1:2] <- c("to", "from")
   comparison <- merge(cn[, c("from","to","weight")], bn2[, c("from","to","weight")],
-                      by = c("from","to"), suffixes = c(".citenets", ".biblionetwork"))
+                      by = c("from","to"), suffixes = c(".bibnets", ".biblionetwork"))
 }
-comparison$diff <- comparison$weight.citenets - comparison$weight.biblionetwork
+comparison$diff <- comparison$weight.bibnets - comparison$weight.biblionetwork
 comparison
 ```
 
-### 8.3 Fractional Counting: citenets vs biblionetwork
+### 8.3 Fractional Counting: bibnets vs biblionetwork
 
 ```{r}
 #| label: equiv-fractional
@@ -510,11 +510,11 @@ cn_frac <- author_network(d, "collaboration", counting = "fractional")
 
 cat("=== biblionetwork (fractional_counting) ===\n")
 print(bn_frac[, c("from", "to", "weight")])
-cat("\n=== citenets (counting = 'fractional') ===\n")
+cat("\n=== bibnets (counting = 'fractional') ===\n")
 print(cn_frac[, c("from", "to", "weight")])
 ```
 
-### 8.4 Paper-Level Fractional: citenets vs biblionetwork
+### 8.4 Paper-Level Fractional: bibnets vs biblionetwork
 
 ```{r}
 #| label: equiv-paper
@@ -526,11 +526,11 @@ cn_paper <- author_network(d, "collaboration", counting = "paper")
 
 cat("=== biblionetwork (fractional_counting_refined) ===\n")
 print(bn_ref[, c("from", "to", "weight")])
-cat("\n=== citenets (counting = 'paper') ===\n")
+cat("\n=== bibnets (counting = 'paper') ===\n")
 print(cn_paper[, c("from", "to", "weight")])
 ```
 
-### 8.5 Coupling Cosine: citenets vs biblionetwork
+### 8.5 Coupling Cosine: bibnets vs biblionetwork
 
 ```{r}
 #| label: equiv-coupling
@@ -544,16 +544,16 @@ d_refs$references <- list(c("R1","R2","R3"), c("R1","R2","R4"), c("R2","R3","R4"
 # biblionetwork: coupling angle (cosine)
 bn_coup <- as.data.frame(biblio_coupling(refs_long, source = "citing", ref = "cited",
                                           normalized_weight_only = FALSE))
-# citenets: coupling + cosine
+# bibnets: coupling + cosine
 cn_coup <- document_network(d_refs, "coupling", similarity = "cosine")
 
 cat("=== biblionetwork ===\n")
 print(bn_coup[, c("from", "to", "weight", "nb_shared_references")])
-cat("\n=== citenets ===\n")
+cat("\n=== bibnets ===\n")
 print(cn_coup)
 ```
 
-### 8.6 All Five Normalization Formulas: citenets vs bibliometrix
+### 8.6 All Five Normalization Formulas: bibnets vs bibliometrix
 
 ```{r}
 #| label: equiv-normalize
@@ -584,7 +584,7 @@ results <- lapply(names(methods_map), function(m) {
 do.call(rbind, results)
 ```
 
-### 8.7 Co-citation Cosine: citenets vs biblionetwork
+### 8.7 Co-citation Cosine: bibnets vs biblionetwork
 
 ```{r}
 #| label: equiv-cocit
@@ -607,7 +607,7 @@ cn_cc <- reference_network(d5, similarity = "cosine", threshold = 0)
 
 cat("=== biblionetwork (co-citation cosine) ===\n")
 print(bn_cc[, c("from", "to", "weight")])
-cat("\n=== citenets (co-citation cosine) ===\n")
+cat("\n=== bibnets (co-citation cosine) ===\n")
 print(cn_cc[, c("from", "to", "weight")])
 ```
 

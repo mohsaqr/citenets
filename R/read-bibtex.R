@@ -6,19 +6,22 @@
 #' non-standard `cited-references` or `note` field with reference data.
 #'
 #' @param file Path to a `.bib` file.
+#' @param encoding Character. File encoding. Default `"UTF-8"`.
 #'
-#' @return A data frame with the same column structure as [read_scopus()].
-#'   The `references` column will typically be empty for standard BibTeX.
+#' @return A data frame in the standard bibnets format: `id`, `title`,
+#'   `year`, `journal`, `doi`, `cited_by_count`, `abstract`, `type`,
+#'   plus list-columns `authors`, `references` (typically empty for
+#'   BibTeX), and `keywords`.
 #'
 #' @export
 #' @examples
 #' \dontrun{
 #' data <- read_bibtex("references.bib")
 #' }
-read_bibtex <- function(file) {
-  stopifnot(file.exists(file))
+read_bibtex <- function(file, encoding = "UTF-8") {
+  check_file(file)
 
-  lines <- readLines(file, encoding = "UTF-8", warn = FALSE)
+  lines <- readLines(file, encoding = encoding, warn = FALSE)
 
   ## Parse BibTeX entries
   entries <- list()

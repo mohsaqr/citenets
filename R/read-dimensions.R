@@ -6,7 +6,11 @@
 #' @param file Path to a Dimensions CSV export file.
 #' @param encoding Character. File encoding. Default `"UTF-8"`.
 #'
-#' @return A data frame with the same column structure as [read_scopus()].
+#' @return A data frame in the standard bibnets format: `id`, `title`,
+#'   `year`, `journal`, `doi`, `cited_by_count`, `abstract`, `type`,
+#'   plus list-columns `authors`, `references`, and `keywords`.
+#'   Dimensions-specific extras: `affiliations` (list-column),
+#'   `countries` (list-column).
 #'
 #' @export
 #' @examples
@@ -14,10 +18,15 @@
 #' data <- read_dimensions("dimensions_export.csv")
 #' }
 read_dimensions <- function(file, encoding = "UTF-8") {
-  stopifnot(file.exists(file))
+  check_file(file)
+
+  ## Dimensions CSVs include a one-line metadata header ("About the data: ...")
+  ## before the actual column-name row. Detect and skip it.
+  first_line <- readLines(file, n = 1L, encoding = encoding, warn = FALSE)
+  skip_rows <- if (grepl("^\"?About the data", first_line)) 1L else 0L
 
   raw <- utils::read.csv(file, stringsAsFactors = FALSE, fileEncoding = encoding,
-                          check.names = FALSE)
+                          check.names = FALSE, skip = skip_rows)
 
   col_map <- list(
     id       = c("Publication ID", "Dimensions URL"),
@@ -31,9 +40,11 @@ read_dimensions <- function(file, encoding = "UTF-8") {
     type     = c("Publication Type", "Document Type"),
     authors  = c("Authors"),
     refs     = c("Cited references", "Cited References", "References"),
-    affiliations = c("Authors Affiliations Name of Research organization",
+    affiliations = c("Authors Affiliations - Name of Research organization",
+                      "Authors Affiliations Name of Research organization",
                       "Research Organizations - standardized"),
-    countries = c("Authors Affiliations Country of Research organization",
+    countries = c("Authors Affiliations - Country of Research organization",
+                   "Authors Affiliations Country of Research organization",
                    "Countries of Research organization")
   )
 
@@ -88,8 +99,9 @@ read_dimensions <- function(file, encoding = "UTF-8") {
                         "Research Categories"))
   result$keywords <- split_field(kw_raw, sep = ";")
 
-  ## Source-specific extras
-  result$affiliations <- get_col(col_map$affiliations)
+  ## Source-specific extras — both are list-columns so institution_network()
+  ## and country_network() can use them directly
+  result$affiliations <- split_field(get_col(col_map$affiliations), sep = ";")
   result$countries <- split_field(get_col(col_map$countries), sep = ";")
 
   result

@@ -73,12 +73,10 @@ test_that("backbone always keeps edges from degree-1 nodes", {
 
 test_that("backbone returns input columns unchanged plus alpha", {
   edges <- make_backbone_edges()
-  edges$count  <- 1L
-  edges$shared <- 1L
+  edges$count <- 1L
   b <- backbone(edges, alpha = 0.9999)  # keep all
-  expect_true("count"  %in% names(b))
-  expect_true("shared" %in% names(b))
-  expect_true("alpha"  %in% names(b))
+  expect_true("count" %in% names(b))
+  expect_true("alpha" %in% names(b))
 })
 
 test_that("backbone handles empty edge list", {

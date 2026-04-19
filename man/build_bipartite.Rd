@@ -4,7 +4,7 @@
 \alias{build_bipartite}
 \title{Build a bipartite incidence matrix from bibliometric data}
 \usage{
-build_bipartite(data, field, min_freq = 1L)
+build_bipartite(data, field, min_freq = 1L, deduplicate = TRUE)
 }
 \arguments{
 \item{data}{A data frame with at least columns \code{id} and the field specified.}

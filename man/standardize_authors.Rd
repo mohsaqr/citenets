@@ -4,16 +4,21 @@
 \alias{standardize_authors}
 \title{Standardize author names}
 \usage{
-standardize_authors(x)
+standardize_authors(x, flip_names = FALSE)
 }
 \arguments{
 \item{x}{Character vector of author names.}
+
+\item{flip_names}{Logical. If \code{TRUE}, names in \verb{Last, First} format are
+reordered to \verb{First Last}. Off by default — enable only when all names
+in \code{x} reliably follow the \verb{Last, First} convention.}
 }
 \value{
-Character vector of standardized names.
+Character vector, uppercased and cleaned.
 }
 \description{
-Converts author names to a standardized "LASTNAME, FI" format for
-consistent matching across records.
+Uppercase, whitespace normalisation, and dot removal from initials
+(\code{F.J.} → \code{FJ}). Name order and format are preserved — consistent with
+how bibliometrix handles multi-source data.
 }
 \keyword{internal}

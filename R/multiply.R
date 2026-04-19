@@ -12,12 +12,16 @@
 #' @param top_n Integer or `NULL`. If specified, keep only the top `n`
 #'   most frequent nodes and return all edges among them.
 #'
-#' @return A data frame with columns `from`, `to`, `weight`, `count`, `shared`.
+#' @return A data frame with columns `from`, `to`, `weight`, `count`.
 #' @keywords internal
 multiply_bipartite <- function(B, mode = "columns",
                                similarity = "none",
                                threshold = 0,
-                               top_n = NULL) {
+                               top_n = NULL,
+                               self_loops = FALSE) {
+  ## Perianes-Rodriguez strength: deferred row-normalization from apply_counting
+  row_scale <- attr(B, "row_scale")
+
   ## Weighted co-occurrence matrix (sparse)
   if (mode == "columns") {
     A <- Matrix::crossprod(B)
@@ -25,7 +29,7 @@ multiply_bipartite <- function(B, mode = "columns",
     A <- Matrix::tcrossprod(B)
   }
 
-  ## Raw binary co-occurrence for the count/shared columns
+  ## Raw binary co-occurrence for the count column
   B_bin <- (B > 0) * 1
   if (mode == "columns") {
     A_raw <- Matrix::crossprod(B_bin)
@@ -47,7 +51,7 @@ multiply_bipartite <- function(B, mode = "columns",
   if (similarity != "none") {
     A_norm <- normalize(A, method = similarity)
   } else {
-    Matrix::diag(A) <- 0
+    if (!self_loops) Matrix::diag(A) <- 0
     A_norm <- A
   }
 
@@ -57,16 +61,21 @@ multiply_bipartite <- function(B, mode = "columns",
   j <- triplets$j
   x <- triplets$x
 
-  ## Remove diagonal, lower triangle, and zeros
-  keep <- i < j & x != 0
+  ## Remove lower triangle and zeros (diagonal kept when self_loops = TRUE)
+  keep <- (if (self_loops) i <= j else i < j) & x != 0
   i <- i[keep]; j <- j[keep]; x <- x[keep]
 
   if (length(i) == 0L) {
     return(data.frame(
       from = character(0), to = character(0),
-      weight = numeric(0), count = integer(0), shared = integer(0),
+      weight = numeric(0), count = integer(0),
       stringsAsFactors = FALSE
     ))
+  }
+
+  ## Perianes-Rodriguez strength: divide by n_refs_i × n_refs_j
+  if (!is.null(row_scale) && similarity == "none") {
+    x <- x / (row_scale[i] * row_scale[j])
   }
 
   ## Threshold filter early (before name lookup)
@@ -78,7 +87,7 @@ multiply_bipartite <- function(B, mode = "columns",
   if (length(i) == 0L) {
     return(data.frame(
       from = character(0), to = character(0),
-      weight = numeric(0), count = integer(0), shared = integer(0),
+      weight = numeric(0), count = integer(0),
       stringsAsFactors = FALSE
     ))
   }
@@ -94,7 +103,6 @@ multiply_bipartite <- function(B, mode = "columns",
     to = node_names[j],
     weight = x,
     count = as.integer(raw_counts),
-    shared = as.integer(raw_counts),
     stringsAsFactors = FALSE
   )
 

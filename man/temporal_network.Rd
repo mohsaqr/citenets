@@ -10,11 +10,12 @@ temporal_network(
   ...,
   window = 3,
   step = NULL,
-  strategy = "fixed"
+  strategy = "fixed",
+  time_col = "year"
 )
 }
 \arguments{
-\item{data}{A data frame with a \code{year} column.}
+\item{data}{A data frame with a numeric time column.}
 
 \item{network_fun}{Function or character string naming a network function
 (e.g., \code{author_network}, \code{"reference_network"}, \code{conetwork}).}
@@ -22,7 +23,8 @@ temporal_network(
 \item{...}{Additional arguments passed to \code{network_fun} (e.g., \code{type},
 \code{counting}, \code{similarity}, \code{threshold}, \code{top_n}).}
 
-\item{window}{Integer. Width of each time window in years. Default 3.}
+\item{window}{Integer. Width of each time window in units of the time
+column (years, months, quarters, etc.). Default 3.}
 
 \item{step}{Integer or \code{NULL}. Step size between windows. Default \code{NULL}
 (equals \code{window} for fixed, 1 for sliding).}
@@ -30,10 +32,14 @@ temporal_network(
 \item{strategy}{Character. Time window strategy:
 \describe{
 \item{\code{"fixed"}}{Disjoint non-overlapping windows (default).}
-\item{\code{"sliding"}}{Overlapping windows advancing by \code{step} years.}
-\item{\code{"cumulative"}}{Each window starts at the earliest year and
+\item{\code{"sliding"}}{Overlapping windows advancing by \code{step} units.}
+\item{\code{"cumulative"}}{Each window starts at the earliest value and
 extends further.}
 }}
+
+\item{time_col}{Character. Name of the column containing the time variable.
+Default \code{"year"}. Works with any numeric time unit: years, months,
+quarters, semesters, weeks, etc. (e.g., \code{"month"}, \code{"quarter"}, \code{"time"}).}
 }
 \value{
 A named list of data frames (edge lists). Names are window

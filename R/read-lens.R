@@ -4,18 +4,21 @@
 #' data frame.
 #'
 #' @param file Path to a Lens.org CSV export file.
+#' @param encoding Character. File encoding. Default `"UTF-8"`.
 #'
-#' @return A data frame with the same column structure as [read_scopus()].
+#' @return A data frame in the standard bibnets format: `id`, `title`,
+#'   `year`, `journal`, `doi`, `cited_by_count`, `abstract`, `type`,
+#'   plus list-columns `authors`, `references`, and `keywords`.
 #'
 #' @export
 #' @examples
 #' \dontrun{
 #' data <- read_lens("lens_export.csv")
 #' }
-read_lens <- function(file) {
-  stopifnot(file.exists(file))
+read_lens <- function(file, encoding = "UTF-8") {
+  check_file(file)
 
-  raw <- utils::read.csv(file, stringsAsFactors = FALSE, fileEncoding = "UTF-8",
+  raw <- utils::read.csv(file, stringsAsFactors = FALSE, fileEncoding = encoding,
                           check.names = FALSE)
 
   n <- nrow(raw)

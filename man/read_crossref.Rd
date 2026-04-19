@@ -2,7 +2,7 @@
 % Please edit documentation in R/read-crossref.R
 \name{read_crossref}
 \alias{read_crossref}
-\title{Convert Crossref API data to citenets format}
+\title{Convert Crossref API data to bibnets format}
 \usage{
 read_crossref(data)
 }
@@ -10,11 +10,13 @@ read_crossref(data)
 \item{data}{A data frame from \code{cr_works(...)$data}.}
 }
 \value{
-A data frame with the same column structure as \code{\link[=read_scopus]{read_scopus()}}.
+A data frame in the standard bibnets format: \code{id}, \code{title},
+\code{year}, \code{journal}, \code{doi}, \code{cited_by_count}, \code{abstract}, \code{type},
+plus list-columns \code{authors}, \code{references}, and \code{keywords}.
 }
 \description{
 Takes the output of \code{rcrossref::cr_works()} (the \verb{$data} tibble/data frame)
-and converts it to the standardized citenets format.
+and converts it to the standardized bibnets format.
 }
 \examples{
 \dontrun{

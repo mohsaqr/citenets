@@ -13,26 +13,26 @@ make_prune_edges <- function() {
 
 test_that("prune threshold keeps edges at or above value", {
   edges <- make_prune_edges()
-  p <- prune(edges, method = "threshold", value = 3)
+  p <- prune(edges, threshold = 3)
   expect_true(all(p$weight >= 3))
   expect_equal(nrow(p), 3)   # weights 5, 4, 3
 })
 
-test_that("prune threshold value=0 keeps everything", {
+test_that("prune threshold=0 keeps everything", {
   edges <- make_prune_edges()
-  p <- prune(edges, method = "threshold", value = 0)
+  p <- prune(edges, threshold = 0)
   expect_equal(nrow(p), nrow(edges))
 })
 
-test_that("prune threshold value=6 drops everything", {
+test_that("prune threshold=6 drops everything", {
   edges <- make_prune_edges()
-  p <- prune(edges, method = "threshold", value = 6)
+  p <- prune(edges, threshold = 6)
   expect_equal(nrow(p), 0)
 })
 
 test_that("prune threshold result sorted descending by weight", {
   edges <- make_prune_edges()
-  p <- prune(edges, method = "threshold", value = 0)
+  p <- prune(edges, threshold = 0)
   expect_true(all(diff(p$weight) <= 0))
 })
 
@@ -40,10 +40,8 @@ test_that("prune threshold result sorted descending by weight", {
 
 test_that("prune top_n keeps correct edges", {
   edges <- make_prune_edges()
-  p <- prune(edges, method = "top_n", value = 2)
+  p <- prune(edges, top_n = 2)
 
-  ## Expected: A-B(5), A-D(2), B-C(4), C-D(3) kept; A-C(1) and B-D(1) dropped
-  ## See inline reasoning in test-backbone.R header
   expect_equal(nrow(p), 4)
   expect_true(all(p$weight >= 2))
 
@@ -60,17 +58,14 @@ test_that("prune top_n keeps correct edges", {
 
 test_that("prune top_n with n >= max degree keeps everything", {
   edges <- make_prune_edges()
-  p <- prune(edges, method = "top_n", value = 10)
+  p <- prune(edges, top_n = 10)
   expect_equal(nrow(p), nrow(edges))
 })
 
 test_that("prune top_n=1 keeps only the strongest edge per node", {
   edges <- make_prune_edges()
-  p <- prune(edges, method = "top_n", value = 1)
+  p <- prune(edges, top_n = 1)
 
-  ## A's strongest: A-B(5). B's strongest: A-B(5). C's strongest: B-C(4).
-  ## D's strongest: C-D(3). B also sees A-B as its #1 (5 > 4).
-  ## So A-B, B-C, C-D must all be present.
   has_edge <- function(f, t) {
     any((p$from == f & p$to == t) | (p$from == t & p$to == f))
   }
@@ -80,7 +75,7 @@ test_that("prune top_n=1 keeps only the strongest edge per node", {
 
 test_that("prune top_n result sorted descending by weight", {
   edges <- make_prune_edges()
-  p <- prune(edges, method = "top_n", value = 2)
+  p <- prune(edges, top_n = 2)
   expect_true(all(diff(p$weight) <= 0))
 })
 
@@ -88,22 +83,25 @@ test_that("prune top_n result sorted descending by weight", {
 
 test_that("prune preserves extra columns", {
   edges <- make_prune_edges()
-  edges$count  <- 1L
-  edges$shared <- 2L
+  edges$count <- 1L
 
-  p <- prune(edges, method = "threshold", value = 3)
-  expect_true("count"  %in% names(p))
-  expect_true("shared" %in% names(p))
+  p <- prune(edges, threshold = 3)
+  expect_true("count" %in% names(p))
 })
 
 test_that("prune returns empty data frame on empty input", {
   empty <- data.frame(from = character(0), to = character(0),
                        weight = numeric(0), stringsAsFactors = FALSE)
-  p <- prune(empty, method = "threshold", value = 1)
+  p <- prune(empty, threshold = 1)
   expect_equal(nrow(p), 0)
 })
 
-test_that("prune rejects unknown method", {
+test_that("prune errors when neither threshold nor top_n given", {
   edges <- make_prune_edges()
-  expect_error(prune(edges, method = "mst", value = 1))
+  expect_error(prune(edges), "must be specified")
+})
+
+test_that("prune errors when both threshold and top_n given", {
+  edges <- make_prune_edges()
+  expect_error(prune(edges, threshold = 2, top_n = 3), "Only one")
 })

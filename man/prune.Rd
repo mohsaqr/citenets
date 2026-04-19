@@ -4,20 +4,15 @@
 \alias{prune}
 \title{Prune a weighted edge list}
 \usage{
-prune(edges, method = "threshold", value)
+prune(edges, threshold = NULL, top_n = NULL)
 }
 \arguments{
 \item{edges}{A data frame with at least columns \code{from}, \code{to}, and \code{weight}.}
 
-\item{method}{Character. Pruning method:
-\describe{
-\item{\code{"threshold"}}{Remove edges with \code{weight < value}.}
-\item{\code{"top_n"}}{For each node, keep only its \code{value} strongest edges.
-An edge is kept if it is in the top \code{value} for \emph{either} endpoint.}
-}}
+\item{threshold}{Numeric. Keep only edges with \code{weight >= threshold}.}
 
-\item{value}{Numeric. Threshold weight (for \code{"threshold"}) or number of
-edges to keep per node (for \code{"top_n"}).}
+\item{top_n}{Integer. For each node, keep only its \code{top_n} strongest edges.
+An edge is kept if it is in the top \code{top_n} for \emph{either} endpoint.}
 }
 \value{
 The filtered edge data frame (same columns as input).
@@ -33,8 +28,8 @@ edges <- data.frame(
 )
 
 # Keep only edges with weight >= 3
-prune(edges, method = "threshold", value = 3)
+prune(edges, threshold = 3)
 
 # Keep the 2 strongest edges per node
-prune(edges, method = "top_n", value = 2)
+prune(edges, top_n = 2)
 }

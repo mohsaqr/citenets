@@ -1,5 +1,5 @@
 ## Tests for source_network(), country_network(), institution_network(), conetwork()
-## All should return citenets_network S3 objects.
+## All should return bibnets_network S3 objects.
 
 ## Extended test data with countries and affiliations
 make_extended_data <- function() {
@@ -19,10 +19,10 @@ make_extended_data <- function() {
 
 ## ── source_network ──────────────────────────────────────────────────────────
 
-test_that("source_network coupling returns citenets_network", {
+test_that("source_network coupling returns bibnets_network", {
   d <- make_test_data()
   edges <- source_network(d, type = "coupling")
-  expect_s3_class(edges, "citenets_network")
+  expect_s3_class(edges, "bibnets_network")
   expect_true(all(c("from", "to", "weight") %in% names(edges)))
   expect_equal(attr(edges, "network_type"), "source_coupling")
 })
@@ -35,10 +35,10 @@ test_that("source_network coupling produces journal nodes", {
   expect_true(all(all_nodes %in% c("J1", "J2")))
 })
 
-test_that("source_network equivalence returns citenets_network", {
+test_that("source_network equivalence returns bibnets_network", {
   d <- make_test_data()
   edges <- source_network(d, type = "equivalence")
-  expect_s3_class(edges, "citenets_network")
+  expect_s3_class(edges, "bibnets_network")
   expect_equal(attr(edges, "network_type"), "source_equivalence")
 })
 
@@ -55,7 +55,7 @@ test_that("source_network co_citation works with cited_journals column", {
     c("J2", "J3")
   )
   edges <- source_network(d, type = "co_citation")
-  expect_s3_class(edges, "citenets_network")
+  expect_s3_class(edges, "bibnets_network")
   expect_equal(attr(edges, "network_type"), "source_co_citation")
 })
 
@@ -67,10 +67,10 @@ test_that("source_network coupling requires journal column", {
 
 ## ── country_network ─────────────────────────────────────────────────────────
 
-test_that("country_network collaboration returns citenets_network", {
+test_that("country_network collaboration returns bibnets_network", {
   d <- make_extended_data()
   edges <- country_network(d, type = "collaboration")
-  expect_s3_class(edges, "citenets_network")
+  expect_s3_class(edges, "bibnets_network")
   expect_equal(attr(edges, "network_type"), "country_collaboration")
 })
 
@@ -97,26 +97,26 @@ test_that("country_network collaboration edge counts are correct", {
   expect_equal(get_w("UK",  "DE"), 1)
 })
 
-test_that("country_network coupling returns citenets_network", {
+test_that("country_network coupling returns bibnets_network", {
   d <- make_extended_data()
   edges <- country_network(d, type = "coupling")
-  expect_s3_class(edges, "citenets_network")
+  expect_s3_class(edges, "bibnets_network")
   expect_equal(attr(edges, "network_type"), "country_coupling")
 })
 
-test_that("country_network equivalence returns citenets_network", {
+test_that("country_network equivalence returns bibnets_network", {
   d <- make_extended_data()
   edges <- country_network(d, type = "equivalence")
-  expect_s3_class(edges, "citenets_network")
+  expect_s3_class(edges, "bibnets_network")
   expect_equal(attr(edges, "network_type"), "country_equivalence")
 })
 
 ## ── institution_network ─────────────────────────────────────────────────────
 
-test_that("institution_network collaboration returns citenets_network", {
+test_that("institution_network collaboration returns bibnets_network", {
   d <- make_extended_data()
   edges <- institution_network(d, type = "collaboration")
-  expect_s3_class(edges, "citenets_network")
+  expect_s3_class(edges, "bibnets_network")
   expect_equal(attr(edges, "network_type"), "institution_collaboration")
 })
 
@@ -128,26 +128,26 @@ test_that("institution_network collaboration has correct nodes", {
   expect_true(all(all_nodes %in% c("MIT", "OXFORD", "TU BERLIN")))
 })
 
-test_that("institution_network coupling returns citenets_network", {
+test_that("institution_network coupling returns bibnets_network", {
   d <- make_extended_data()
   edges <- institution_network(d, type = "coupling")
-  expect_s3_class(edges, "citenets_network")
+  expect_s3_class(edges, "bibnets_network")
   expect_equal(attr(edges, "network_type"), "institution_coupling")
 })
 
-test_that("institution_network equivalence returns citenets_network", {
+test_that("institution_network equivalence returns bibnets_network", {
   d <- make_extended_data()
   edges <- institution_network(d, type = "equivalence")
-  expect_s3_class(edges, "citenets_network")
+  expect_s3_class(edges, "bibnets_network")
   expect_equal(attr(edges, "network_type"), "institution_equivalence")
 })
 
 ## ── conetwork ───────────────────────────────────────────────────────────────
 
-test_that("conetwork co-occurrence returns citenets_network", {
+test_that("conetwork co-occurrence returns bibnets_network", {
   d <- make_test_data()
   edges <- conetwork(d, "keywords")
-  expect_s3_class(edges, "citenets_network")
+  expect_s3_class(edges, "bibnets_network")
   expect_equal(attr(edges, "network_type"), "keywords_co_occurrence")
 })
 
@@ -159,10 +159,10 @@ test_that("conetwork co-occurrence has correct keyword nodes", {
   expect_true(all(all_nodes %in% c("ML", "DL", "NLP", "CV")))
 })
 
-test_that("conetwork by= returns citenets_network with by_ label", {
+test_that("conetwork by= returns bibnets_network with by_ label", {
   d <- make_test_data()
   edges <- conetwork(d, "authors", by = "keywords")
-  expect_s3_class(edges, "citenets_network")
+  expect_s3_class(edges, "bibnets_network")
   expect_equal(attr(edges, "network_type"), "authors_by_keywords")
 })
 

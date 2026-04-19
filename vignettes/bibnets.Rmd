@@ -1,0 +1,248 @@
+---
+title: "Getting Started with bibnets"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with bibnets}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bibnets)
+```
+
+## Datasets
+
+This vignette uses two datasets:
+
+- **`scopus_quantum_cloud`** — 499 Scopus records on green cloud computing and
+  quantization (2020–2025), with author keywords and affiliations. Source:
+  Elsevier Scopus, archived at
+  [doi:10.5281/zenodo.17142636](https://doi.org/10.5281/zenodo.17142636) (CC BY 4.0).
+- **`open_alex_gold_open_access_learning_analytics`** — 1,508 gold open-access
+  works on learning analytics from OpenAlex (CC0), with authors, countries, and
+  institutions.
+
+```{r}
+data(scopus_quantum_cloud)
+data(open_alex_gold_open_access_learning_analytics)
+
+sc  <- scopus_quantum_cloud
+oa  <- open_alex_gold_open_access_learning_analytics
+```
+
+## Reading data
+
+`read_biblio()` auto-detects the format of your export file:
+
+```{r, eval = FALSE}
+data <- read_biblio("export.csv")          # Scopus, WoS, Dimensions, Lens, OpenAlex
+data <- read_biblio("refs.bib")            # BibTeX
+data <- read_biblio("refs.ris")            # RIS
+
+# Or call the format-specific readers directly:
+data <- read_scopus("scopus.csv")
+data <- read_wos("savedrecs.txt")
+data <- read_openalex_csv("works.csv")
+data <- read_dimensions("dims.csv")
+data <- read_lens("lens.csv")
+```
+
+The bundled dataset can also be read directly from the archived CSV:
+
+```{r, eval = FALSE}
+sc <- read_scopus("scopus_quantum_cloud.csv")
+```
+
+All readers return the same standard column set: `id`, `title`, `year`,
+`journal`, `doi`, `cited_by_count`, `abstract`, `type`, plus list-columns
+`authors`, `references`, and `keywords`.
+
+## Author, country, and institution collaboration
+
+Authors, countries, and institutions are all facets of the same authorship
+record, so they are naturally demonstrated together. The OpenAlex dataset is
+used here: it is large enough (1,508 papers) to produce meaningful networks
+and already carries `countries` and `affiliations` columns.
+
+### Authors
+
+Two authors are linked when they co-author at least one publication.
+
+```{r}
+collab <- author_network(oa, "collaboration")
+collab
+```
+
+Keep only the strongest collaborations:
+
+```{r}
+prune(collab, threshold = 3)
+```
+
+Fractional counting down-weights authors on large teams:
+
+```{r}
+author_network(oa, "collaboration", counting = "fractional")
+```
+
+### Countries
+
+Two countries are linked when authors from both appear on the same paper.
+Fractional counting normalizes by collaboration size so that large multi-author
+papers do not dominate the network.
+
+```{r}
+country_network(oa, "collaboration", counting = "fractional")
+```
+
+### Institutions
+
+```{r}
+institution_network(oa, "collaboration", counting = "fractional")
+```
+
+## Keyword co-occurrence
+
+Two keywords are linked when they appear together in the same paper.
+
+```{r}
+kw <- keyword_network(sc)
+kw
+```
+
+## Counting methods
+
+bibnets implements 13 counting methods. The first four are
+**position-independent** and work for all network types. The remaining nine are
+**position-dependent** and apply fractional credit based on byline order
+(collaboration networks only).
+
+| Method | Description |
+|---|---|
+| `"full"` | Each co-occurrence counts as 1 |
+| `"fractional"` | Weight = 1 / (k_i × k_j) |
+| `"paper"` | Weight = 1 / k_i (paper normalised) |
+| `"strength"` | IDF-weighted / (k_i × k_j) (Perianes-Rodriguez 2016) |
+| `"harmonic"` | Credit ∝ 1/position (Hagen 2008) |
+| `"arithmetic"` | Credit ∝ (n − pos + 1) / sum |
+| `"geometric"` | Credit ∝ 2^(n − pos) / sum (Liu & Fang 2023) |
+| `"adaptive_geometric"` | Geometric, adapted to author count |
+| `"golden"` | Credit ∝ φ^(n − pos) |
+| `"first"` | Credit = 1 for first author, 0 for others |
+| `"last"` | Credit = 1 for last author, 0 for others |
+| `"first_last"` | First and last authors upweighted |
+| `"position_weighted"` | Custom weight vector |
+
+```{r}
+# Harmonic counting rewards first authorship
+author_network(oa, "collaboration", counting = "harmonic")
+```
+
+## Reducing networks
+
+### Backbone extraction (Serrano disparity filter)
+
+The disparity filter retains edges that are statistically significant for at
+least one endpoint — preserving multiscale structure rather than applying a
+global threshold.
+
+```{r}
+edges <- author_network(oa, "collaboration")
+backbone(edges, alpha = 0.05)
+```
+
+### Pruning
+
+```{r}
+edges <- keyword_network(sc)
+
+# Remove weak edges
+prune(edges, threshold = 2)
+
+# Top-k neighbours per node
+prune(edges, top_n = 3)
+```
+
+### Top nodes
+
+```{r}
+filter_top(edges, n = 10)
+```
+
+## Temporal networks
+
+`temporal_network()` wraps any builder over time windows. The OpenAlex dataset
+spans multiple years and is used here.
+
+```{r}
+# Fixed 3-year windows
+tn <- temporal_network(oa, author_network, "collaboration", window = 3)
+names(tn)
+
+# Each element is a standard bibnets_network
+tn[[1]]
+
+# Cumulative windows — each period includes all prior papers
+temporal_network(oa, author_network, "collaboration",
+                 window = 3, strategy = "cumulative")
+```
+
+## Generic conetwork
+
+`conetwork()` builds any co-occurrence or bipartite-projected network from any
+column, without a dedicated function:
+
+```{r}
+# Keywords co-occurring in the same paper
+conetwork(sc, "keywords")
+
+# Authors linked by shared keywords
+conetwork(sc, "authors", by = "keywords")
+```
+
+## Exporting networks
+
+```{r}
+edges <- keyword_network(sc)
+
+# Sparse adjacency matrix
+m <- to_matrix(edges)
+m[1:4, 1:4]
+
+# Gephi node/edge tables (pass file = "dir/" to write CSVs)
+gephi <- to_gephi(edges)
+head(gephi$edges)
+
+# GraphML string (pass file = "out.graphml" to write)
+xml <- to_graphml(edges)
+cat(substr(xml, 1, 300))
+
+# igraph (requires igraph package)
+# g <- to_igraph(edges)
+
+# cograph (requires cograph package)
+# net <- to_cograph(edges)
+```
+
+## S3 methods
+
+All network functions return a `bibnets_network` object — a data frame subclass
+carrying metadata as attributes.
+
+```{r}
+edges <- author_network(oa, "collaboration", counting = "harmonic")
+
+print(edges)
+summary(edges)
+
+attr(edges, "network_type")
+attr(edges, "counting")
+```

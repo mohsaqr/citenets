@@ -6,9 +6,11 @@
 \usage{
 build_author_bipartite(
   data,
+  field = "authors",
   counting = "full",
   position_weights = c(1, 0.8, 0.6, 0.4),
-  first_last_weight = 2
+  first_last_weight = 2,
+  deduplicate = TRUE
 )
 }
 \arguments{

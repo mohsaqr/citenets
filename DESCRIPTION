@@ -1,25 +1,23 @@
-Package: citenets
+Package: bibnets
 Title: Citation, Co-Citation, and Bibliometric Network Construction
 Version: 0.3.0
-Authors@R:
+Authors@R: c(
     person("Mohammed", "Saqr", , "saqr@saqr.me", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0001-5881-3109"))
-Description: Constructs bibliometric networks from scholarly data using
-    state-of-the-art counting and normalization methods. Supports
-    co-citation, bibliographic coupling, co-authorship, keyword
-    co-occurrence, and direct citation networks. Implements full counting,
-    fractional counting (Perianes-Rodriguez et al., 2016), and paper-level
-    fractional counting (Batagelj & Cerinsek, 2013) via two-mode network
-    multiplication. Normalizations include association strength (van Eck &
-    Waltman, 2009), Salton's cosine, Jaccard, inclusion index, and
-    equivalence index. Reads Scopus, Web of Science, OpenAlex, BibTeX,
-    RIS, Lens.org, Dimensions, and Crossref formats. Additional tools
-    include temporal network analysis, historiograph construction, backbone
-    extraction (Serrano et al., 2009), and export to Gephi, GraphML, and
-    cograph.
+           comment = c(ORCID = "0000-0001-5881-3109")),
+    person("Sonsoles", "López-Pernas", role = "aut",
+           comment = c(ORCID = "0000-0002-9621-1392")))
+Description: Constructs bibliometric networks from scholarly data. Supports
+    co-authorship, keyword co-occurrence, co-citation, bibliographic
+    coupling, and direct citation networks with multiple counting and
+    normalisation methods. Reads Scopus, Web of Science, BibTeX, RIS,
+    OpenAlex, Lens.org, and Dimensions exports. Includes tools for
+    temporal analysis, backbone extraction, and export to common network
+    formats. Methods described in López-Pernas, Saqr & Apiola (2023)
+    <doi:10.1007/978-3-031-25336-2_5> and Apiola, Saqr & López-Pernas
+    (2023) <doi:10.1007/978-3-031-25336-2_6>.
 License: MIT + file LICENSE
-URL: https://github.com/mohsaqr/citenets
-BugReports: https://github.com/mohsaqr/citenets/issues
+URL: https://github.com/mohsaqr/bibnets
+BugReports: https://github.com/mohsaqr/bibnets/issues
 Depends:
     R (>= 4.1.0)
 Imports:
@@ -28,7 +26,9 @@ Imports:
     utils
 Suggests:
     bibliometrix,
+    biblionetwork,
     cograph,
+    data.table,
     igraph,
     knitr,
     openalexR,
@@ -40,5 +40,6 @@ VignetteBuilder: knitr
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
+LazyDataCompression: xz
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

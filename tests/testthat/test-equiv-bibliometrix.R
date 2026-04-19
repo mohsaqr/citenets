@@ -1,4 +1,4 @@
-## Cross-validation: citenets vs bibliometrix
+## Cross-validation: bibnets vs bibliometrix
 ## Verifies numerical equivalence of network construction and normalization
 
 test_that("co-authorship matches bibliometrix (full counting)", {
@@ -15,7 +15,7 @@ test_that("co-authorship matches bibliometrix (full counting)", {
     stringsAsFactors = FALSE
   )
 
-  ## citenets format
+  ## bibnets format
   d <- data.frame(id = paste0("W", 1:5), stringsAsFactors = FALSE)
   d$authors <- list(
     c("SMITH J", "JONES A", "LEE K"),
@@ -33,7 +33,7 @@ test_that("co-authorship matches bibliometrix (full counting)", {
   A_bm <- as.matrix(A_bm)
   diag(A_bm) <- 0
 
-  ## citenets
+  ## bibnets
   edges_cn <- author_network(d, "collaboration", counting = "full")
   A_cn <- as.matrix(to_matrix(edges_cn))
 
@@ -43,7 +43,7 @@ test_that("co-authorship matches bibliometrix (full counting)", {
   A_cn <- A_cn[common, common]
 
   expect_equal(A_cn, A_bm, tolerance = 1e-10,
-               info = "Co-authorship full counting: citenets vs bibliometrix")
+               info = "Co-authorship full counting: bibnets vs bibliometrix")
 })
 
 test_that("co-citation via cocMatrix matches bibliometrix", {
@@ -67,7 +67,7 @@ test_that("co-citation via cocMatrix matches bibliometrix", {
   A_bm <- as.matrix(A_bm)
   diag(A_bm) <- 0
 
-  ## citenets: use same ref names as bibliometrix parsed them
+  ## bibnets: use same ref names as bibliometrix parsed them
   ## Verified mapping: Paper 1 = JONES, LEE, SMITH; Paper 2 = JONES, SMITH, CHEN; etc.
   d <- data.frame(id = paste0("W", 1:5), stringsAsFactors = FALSE)
   d$references <- list(
@@ -86,7 +86,7 @@ test_that("co-citation via cocMatrix matches bibliometrix", {
   A_cn <- A_cn[common, common]
 
   expect_equal(A_cn, A_bm, tolerance = 1e-10,
-               info = "Co-citation: citenets vs bibliometrix cocMatrix")
+               info = "Co-citation: bibnets vs bibliometrix cocMatrix")
 })
 
 test_that("bibliographic coupling via cocMatrix matches bibliometrix", {
@@ -109,7 +109,7 @@ test_that("bibliographic coupling via cocMatrix matches bibliometrix", {
   A_bm <- as.matrix(A_bm)
   diag(A_bm) <- 0
 
-  ## citenets: use same ref names as bibliometrix parsed them
+  ## bibnets: use same ref names as bibliometrix parsed them
   d <- data.frame(id = paste0("W", 1:5), stringsAsFactors = FALSE)
   d$references <- list(
     c("JONES 2011 SCIENCE", "LEE 2012 CELL", "SMITH 2010 NATURE"),
@@ -126,7 +126,7 @@ test_that("bibliographic coupling via cocMatrix matches bibliometrix", {
   eig_cn <- sort(eigen(A_cn, symmetric = TRUE, only.values = TRUE)$values)
 
   expect_equal(eig_cn, eig_bm, tolerance = 1e-8,
-               info = "Coupling spectrum: citenets vs bibliometrix")
+               info = "Coupling spectrum: bibnets vs bibliometrix")
 })
 
 test_that("all 5 normalizations match bibliometrix formulas", {
@@ -173,7 +173,7 @@ test_that("all 5 normalizations match bibliometrix formulas", {
   )
 
   for (method_name in names(norm_methods)) {
-    ## citenets
+    ## bibnets
     S_cn <- as.matrix(normalize(A, method_name))
 
     ## Hand-computed reference

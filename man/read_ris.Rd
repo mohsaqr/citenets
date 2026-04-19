@@ -4,13 +4,18 @@
 \alias{read_ris}
 \title{Read an RIS file}
 \usage{
-read_ris(file)
+read_ris(file, encoding = "UTF-8")
 }
 \arguments{
 \item{file}{Path to a \code{.ris} file.}
+
+\item{encoding}{Character. File encoding. Default \code{"UTF-8"}.}
 }
 \value{
-A data frame with the same column structure as \code{\link[=read_scopus]{read_scopus()}}.
+A data frame in the standard bibnets format: \code{id}, \code{title},
+\code{year}, \code{journal}, \code{doi}, \code{cited_by_count}, \code{abstract}, \code{type},
+plus list-columns \code{authors}, \code{references} (typically empty for
+RIS), and \code{keywords}.
 }
 \description{
 Parses a \code{.ris} file into a standardized bibliometric data frame.

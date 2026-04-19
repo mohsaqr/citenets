@@ -40,12 +40,12 @@
 #' normalize(A, "cosine")
 #' normalize(A, "jaccard")
 normalize <- function(A, method = "none") {
-  stopifnot(
-    is.matrix(A) || inherits(A, "Matrix"),
-    nrow(A) == ncol(A),
-    method %in% c("none", "association", "cosine", "jaccard",
-                   "inclusion", "equivalence")
-  )
+  if (!is.matrix(A) && !inherits(A, "Matrix"))
+    stop("'A' must be a matrix or Matrix object", call. = FALSE)
+  if (nrow(A) != ncol(A))
+    stop("'A' must be square (got ", nrow(A), " x ", ncol(A), ")", call. = FALSE)
+  check_choice(method, c("none", "association", "cosine", "jaccard",
+                          "inclusion", "equivalence"), "method")
 
   if (method == "none") return(A)
 

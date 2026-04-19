@@ -12,23 +12,11 @@ read_scopus(file, encoding = "UTF-8")
 \item{encoding}{Character. File encoding. Default \code{"UTF-8"}.}
 }
 \value{
-A data frame with columns:
-\describe{
-\item{\code{id}}{Scopus EID or row identifier.}
-\item{\code{title}}{Document title.}
-\item{\code{authors}}{List-column of author names.}
-\item{\code{year}}{Publication year (integer).}
-\item{\code{journal}}{Source title.}
-\item{\code{doi}}{DOI string.}
-\item{\code{references}}{List-column of cited reference strings.}
-\item{\code{keywords}}{List-column of author keywords.}
-\item{\code{index_keywords}}{List-column of index keywords.}
-\item{\code{cited_by_count}}{Times cited (integer).}
-\item{\code{abstract}}{Abstract text.}
-\item{\code{affiliations}}{Affiliation string.}
-\item{\code{type}}{Document type.}
-\item{\code{language}}{Language.}
-}
+A data frame in the standard bibnets format: \code{id}, \code{title},
+\code{year}, \code{journal}, \code{doi}, \code{cited_by_count}, \code{abstract}, \code{type},
+plus list-columns \code{authors}, \code{references}, and \code{keywords}.
+Scopus-specific extras: \code{index_keywords} (list-column),
+\code{affiliations} (character), \code{language} (character).
 }
 \description{
 Parses a CSV file exported from Scopus into a standardized bibliometric

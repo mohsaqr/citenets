@@ -20,10 +20,10 @@
 #' @param min_occur Integer. Minimum reference frequency. Default 1.
 #' @param top_n Integer or NULL. Return only the top n edges by weight.
 #'   Default NULL (all edges).
+#' @inheritParams author_network
 #'
-#' @return A data frame with columns `from`, `to`, `weight`, `count`, `shared`.
-#'   For `type = "citation"`, the edges are directed (from = citing,
-#'   to = cited).
+#' @return Depends on `format`. For `type = "citation"`, edges are directed
+#'   (from = citing, to = cited) with `weight` and `count` both 1.
 #'
 #' @export
 #' @examples
@@ -36,16 +36,16 @@ document_network <- function(data,
                              similarity = "none",
                              threshold = 0,
                              min_occur = 1L,
-                             top_n = NULL) {
-  stopifnot(
-    is.data.frame(data),
-    "id" %in% names(data),
-    "references" %in% names(data),
-    type %in% c("coupling", "citation", "co_citation", "equivalence"),
-    counting %in% position_independent_counts(),
-    similarity %in% c("none", "association", "cosine", "jaccard",
-                    "inclusion", "equivalence")
-  )
+                             top_n = NULL,
+                             self_loops = FALSE,
+                             deduplicate = TRUE,
+                             format = "edgelist") {
+  check_data(data, c("id", "references"))
+  check_choice(type, c("coupling", "citation", "co_citation", "equivalence"), "type")
+  check_choice(counting, position_independent_counts(), "counting")
+  check_choice(similarity, c("none", "association", "cosine", "jaccard",
+                              "inclusion", "equivalence"), "similarity")
+  check_format(format)
 
   result <- if (type == "citation") {
     edges <- build_direct_citation(data)
@@ -56,23 +56,28 @@ document_network <- function(data,
     }
     edges
   } else {
-    B <- build_bipartite(data, field = "references", min_freq = min_occur)
+    B <- build_bipartite(data, field = "references", min_freq = min_occur, deduplicate = deduplicate)
     if (type == "coupling") {
       B <- apply_counting(B, counting = counting, network_type = "coupling")
       multiply_bipartite(B, mode = "rows", similarity = similarity,
-                         threshold = threshold, top_n = top_n)
+                         threshold = threshold, top_n = top_n,
+                         self_loops = self_loops)
     } else if (type == "co_citation") {
       B <- apply_counting(B, counting = counting, network_type = "symmetric")
       multiply_bipartite(B, mode = "columns", similarity = similarity,
-                         threshold = threshold, top_n = top_n)
+                         threshold = threshold, top_n = top_n,
+                         self_loops = self_loops)
     } else {
       multiply_bipartite(B, mode = "rows", similarity = "cosine",
-                         threshold = threshold, top_n = top_n)
+                         threshold = threshold, top_n = top_n,
+                         self_loops = self_loops)
     }
   }
 
-  as_citenets_network(result, network_type = paste0("document_", type),
-                      counting = counting, similarity = similarity)
+  directed <- (type == "citation")
+  as_bibnets_network(result, network_type = paste0("document_", type),
+                      counting = counting, similarity = similarity,
+                      format = format, directed = directed)
 }
 
 
@@ -91,7 +96,7 @@ build_direct_citation <- function(data) {
   if (length(citing) == 0L) {
     return(data.frame(
       from = character(0), to = character(0),
-      weight = numeric(0), count = integer(0), shared = integer(0),
+      weight = numeric(0), count = integer(0),
       stringsAsFactors = FALSE
     ))
   }
@@ -100,7 +105,6 @@ build_direct_citation <- function(data) {
     from = citing, to = cited,
     weight = rep(1, length(citing)),
     count = rep(1L, length(citing)),
-    shared = rep(1L, length(citing)),
     stringsAsFactors = FALSE
   )
 }

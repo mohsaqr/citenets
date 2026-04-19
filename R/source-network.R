@@ -13,38 +13,42 @@
 #' @param min_occur Integer. Minimum papers per source. Default 1.
 #' @param top_n Integer or NULL. Return only the top n edges by weight.
 #'   Default NULL (all edges).
+#' @inheritParams author_network
 #'
-#' @return A data frame with columns `from`, `to`, `weight`, `count`, `shared`.
+#' @return Depends on `format`: a `bibnets_network` data frame (default),
+#'   a Gephi-ready data frame, an igraph graph, a cograph_network, or a
+#'   sparse matrix.
 #'
 #' @export
 #' @examples
-#' \dontrun{
-#' source_network(data, "coupling")
-#' }
+#' data(biblio_data)
+#' source_network(biblio_data, "coupling")
 source_network <- function(data,
                            type = "coupling",
                            counting = "full",
                            similarity = "none",
                            threshold = 0,
                            min_occur = 1L,
-                           top_n = NULL) {
-  stopifnot(
-    is.data.frame(data),
-    "id" %in% names(data),
-    type %in% c("coupling", "co_citation", "equivalence"),
-    counting %in% position_independent_counts(),
-    similarity %in% c("none", "association", "cosine", "jaccard",
-                    "inclusion", "equivalence")
-  )
+                           top_n = NULL,
+                           self_loops = FALSE,
+                           deduplicate = TRUE,
+                           format = "edgelist") {
+  check_data(data, "id")
+  check_choice(type, c("coupling", "co_citation", "equivalence"), "type")
+  check_choice(counting, position_independent_counts(), "counting")
+  check_choice(similarity, c("none", "association", "cosine", "jaccard",
+                              "inclusion", "equivalence"), "similarity")
+  check_format(format)
 
   result <- if (type == "coupling") {
-    stopifnot("journal" %in% names(data), "references" %in% names(data))
+    check_data(data, c("journal", "references"))
     agg <- aggregate_by_entity(data, entity_field = "journal",
                                 value_field = "references")
     B <- build_bipartite(agg, field = "references")
     B <- apply_counting(B, counting = counting, network_type = "coupling")
     multiply_bipartite(B, mode = "rows", similarity = similarity,
-                       threshold = threshold, top_n = top_n)
+                       threshold = threshold, top_n = top_n,
+                       self_loops = self_loops)
 
   } else if (type == "co_citation") {
     field <- if ("cited_journals" %in% names(data)) {
@@ -54,20 +58,23 @@ source_network <- function(data,
            "Parse reference strings to extract cited journals first.",
            call. = FALSE)
     }
-    B <- build_bipartite(data, field = field, min_freq = min_occur)
+    B <- build_bipartite(data, field = field, min_freq = min_occur, deduplicate = deduplicate)
     B <- apply_counting(B, counting = counting, network_type = "symmetric")
     multiply_bipartite(B, mode = "columns", similarity = similarity,
-                       threshold = threshold, top_n = top_n)
+                       threshold = threshold, top_n = top_n,
+                       self_loops = self_loops)
 
   } else {
-    stopifnot("journal" %in% names(data), "references" %in% names(data))
+    check_data(data, c("journal", "references"))
     agg <- aggregate_by_entity(data, entity_field = "journal",
                                 value_field = "references")
     B <- build_bipartite(agg, field = "references")
     multiply_bipartite(B, mode = "rows", similarity = "cosine",
-                       threshold = threshold, top_n = top_n)
+                       threshold = threshold, top_n = top_n,
+                       self_loops = self_loops)
   }
 
-  as_citenets_network(result, network_type = paste0("source_", type),
-                      counting = counting, similarity = similarity)
+  as_bibnets_network(result, network_type = paste0("source_", type),
+                      counting = counting, similarity = similarity,
+                      format = format)
 }

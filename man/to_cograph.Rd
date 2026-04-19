@@ -19,14 +19,14 @@ to_cograph(edges, nodes = NULL, directed = FALSE)
 A \code{cograph_network} object (S3 list with \verb{$nodes} and \verb{$edges}).
 }
 \description{
-Converts a citenets edge list to a \code{cograph_network} object by calling
+Converts a bibnets edge list to a \code{cograph_network} object by calling
 \code{cograph::as_cograph()}. Optionally merges node metadata (e.g., from
 \code{\link[=local_citations]{local_citations()}}) into the network's node table so attributes like
 \code{lcs} or \code{year} can be used directly in \code{splot()} aesthetic parameters
 (e.g., \code{node_size = "lcs"}).
 }
 \details{
-Note: citenets edge lists (\code{from}, \code{to}, \code{weight}) are accepted directly
+Note: bibnets edge lists (\code{from}, \code{to}, \code{weight}) are accepted directly
 by \code{cograph::splot()} without conversion. This function is only needed
 when you want to attach node-level metadata.
 }
@@ -34,7 +34,7 @@ when you want to attach node-level metadata.
 \dontrun{
 data(biblio_data)
 
-# Without metadata: splot() accepts citenets edges directly
+# Without metadata: splot() accepts bibnets edges directly
 edges <- author_network(biblio_data, "collaboration")
 cograph::splot(edges)
 

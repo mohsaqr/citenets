@@ -1,11 +1,13 @@
-#' Convert Crossref API data to citenets format
+#' Convert Crossref API data to bibnets format
 #'
 #' Takes the output of `rcrossref::cr_works()` (the `$data` tibble/data frame)
-#' and converts it to the standardized citenets format.
+#' and converts it to the standardized bibnets format.
 #'
 #' @param data A data frame from `cr_works(...)$data`.
 #'
-#' @return A data frame with the same column structure as [read_scopus()].
+#' @return A data frame in the standard bibnets format: `id`, `title`,
+#'   `year`, `journal`, `doi`, `cited_by_count`, `abstract`, `type`,
+#'   plus list-columns `authors`, `references`, and `keywords`.
 #'
 #' @export
 #' @examples

@@ -20,11 +20,7 @@
 #' data(biblio_data)
 #' local_citations(biblio_data)
 local_citations <- function(data) {
-  stopifnot(
-    is.data.frame(data),
-    "id" %in% names(data),
-    "references" %in% names(data)
-  )
+  check_data(data, c("id", "references"))
 
   ids <- as.character(data[["id"]])
 
@@ -91,12 +87,7 @@ local_citations <- function(data) {
 #' h$nodes
 #' h$edges
 historiograph <- function(data, n = 30, min_lcs = 1) {
-  stopifnot(
-    is.data.frame(data),
-    "id" %in% names(data),
-    "references" %in% names(data),
-    "year" %in% names(data)
-  )
+  check_data(data, c("id", "references", "year"))
 
   ## Compute local citations
   lcs_df <- local_citations(data)

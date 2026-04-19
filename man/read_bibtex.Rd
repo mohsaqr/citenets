@@ -4,14 +4,18 @@
 \alias{read_bibtex}
 \title{Read a BibTeX file}
 \usage{
-read_bibtex(file)
+read_bibtex(file, encoding = "UTF-8")
 }
 \arguments{
 \item{file}{Path to a \code{.bib} file.}
+
+\item{encoding}{Character. File encoding. Default \code{"UTF-8"}.}
 }
 \value{
-A data frame with the same column structure as \code{\link[=read_scopus]{read_scopus()}}.
-The \code{references} column will typically be empty for standard BibTeX.
+A data frame in the standard bibnets format: \code{id}, \code{title},
+\code{year}, \code{journal}, \code{doi}, \code{cited_by_count}, \code{abstract}, \code{type},
+plus list-columns \code{authors}, \code{references} (typically empty for
+BibTeX), and \code{keywords}.
 }
 \description{
 Parses a \code{.bib} file into a standardized bibliometric data frame.

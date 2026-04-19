@@ -1,4 +1,4 @@
-## Test helpers for citenets
+## Test helpers for bibnets
 
 ## Small test data: 3 papers, 3 authors, 4 references
 make_test_data <- function() {

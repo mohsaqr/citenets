@@ -6,7 +6,6 @@ make_small_edges <- function() {
     to     = c("B", "C", "C"),
     weight = c(5,   3,   2),
     count  = c(2L,  1L,  1L),
-    shared = c(2L,  1L,  1L),
     stringsAsFactors = FALSE
   )
 }

@@ -1,4 +1,4 @@
 library(testthat)
-library(citenets)
+library(bibnets)
 
-test_check("citenets")
+test_check("bibnets")

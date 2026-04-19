@@ -2,7 +2,7 @@
 % Please edit documentation in R/read-openalex.R
 \name{read_openalex}
 \alias{read_openalex}
-\title{Convert OpenAlex data to citenets format}
+\title{Convert OpenAlex data to bibnets format}
 \usage{
 read_openalex(data)
 }
@@ -13,11 +13,13 @@ contain at least an \code{id} column. Common columns include \code{display_name}
 \code{ab}, and \code{author} (nested).}
 }
 \value{
-A data frame with the same column structure as \code{\link[=read_scopus]{read_scopus()}}.
+A data frame in the standard bibnets format: \code{id}, \code{title},
+\code{year}, \code{journal}, \code{doi}, \code{cited_by_count}, \code{abstract}, \code{type},
+plus list-columns \code{authors}, \code{references}, and \code{keywords}.
 }
 \description{
 Takes the output of \code{\link[openalexR:oa_fetch]{openalexR::oa_fetch()}} (a tibble/data frame of works)
-and converts it to the standardized citenets format with list-columns.
+and converts it to the standardized bibnets format with list-columns.
 }
 \examples{
 \dontrun{

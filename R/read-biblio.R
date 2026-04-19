@@ -15,6 +15,7 @@
 #'     \item{`"ris"`}{RIS file.}
 #'     \item{`"dimensions"`}{Dimensions CSV.}
 #'     \item{`"lens"`}{Lens.org CSV.}
+#'     \item{`"openalex_csv"`}{Flat OpenAlex CSV export (pipe-delimited fields).}
 #'     \item{`"generic"`}{Any CSV. Use `id` and `actors` to specify columns.}
 #'   }
 #' @param id Character. Column name for document identifier. Only used
@@ -22,7 +23,6 @@
 #' @param actors Character vector. Column names to split into list-columns.
 #'   Only used when `format = "generic"`.
 #' @param sep Character. Delimiter for splitting actor columns. Default `";"`.
-#' @param deduplicate Logical. Remove exact duplicate rows. Default `FALSE`.
 #' @param ... Additional arguments passed to the format-specific reader.
 #'
 #' @return A data frame.
@@ -53,7 +53,6 @@ read_biblio <- function(path,
                         id = NULL,
                         actors = NULL,
                         sep = ";",
-                        deduplicate = FALSE,
                         ...) {
   ## Collect all file paths
   files <- resolve_paths(path)
@@ -72,19 +71,7 @@ read_biblio <- function(path,
   result <- do.call(rbind, dfs)
   rownames(result) <- NULL
 
-  ## Deduplicate
-  if (deduplicate) {
-    n_before <- nrow(result)
-    result <- unique(result)
-    n_removed <- n_before - nrow(result)
-    if (n_removed > 0) {
-      message(sprintf("Read %d files: %d rows total, %d unique (%d exact duplicates removed)",
-                      length(files), n_before, nrow(result), n_removed))
-    } else {
-      message(sprintf("Read %d files: %d rows, no duplicates found",
-                      length(files), nrow(result)))
-    }
-  } else if (length(files) > 1) {
+  if (length(files) > 1) {
     message(sprintf("Read %d files: %d rows total", length(files), nrow(result)))
   }
 
@@ -104,17 +91,22 @@ read_single_biblio <- function(file, format, id, actors, sep, ...) {
   }
 
   switch(format,
-    scopus     = read_scopus(file, ...),
-    wos        = read_wos(file, ...),
-    wos_tab    = read_wos(file, format = "tab", ...),
-    bibtex     = read_bibtex(file, ...),
-    ris        = read_ris(file, ...),
-    dimensions = read_dimensions(file, ...),
-    lens       = read_lens(file, ...),
+    scopus       = read_scopus(file, ...),
+    wos          = read_wos(file, ...),
+    wos_tab      = read_wos(file, format = "tab", ...),
+    bibtex       = read_bibtex(file, ...),
+    ris          = read_ris(file, ...),
+    dimensions   = read_dimensions(file, ...),
+    lens         = read_lens(file, ...),
+    openalex_csv = read_openalex_csv(file, ...),
     stop(
       "Could not detect file format for: ", file, "\n\n",
-      "Supported formats:\n",
-      "  auto, scopus, wos, wos_tab, bibtex, ris, dimensions, lens, generic\n\n",
+      "Supported file formats:\n",
+      "  auto, scopus, wos, wos_tab, bibtex, ris, dimensions, lens,\n",
+      "  openalex_csv, generic\n\n",
+      "Note: Nested OpenAlex (openalexR::oa_fetch()) and Crossref data\n",
+      "must be loaded into R first, then converted with\n",
+      "read_openalex() or read_crossref().\n\n",
       "For generic CSV, use: read_biblio(file, format = 'generic', ",
       "actors = c('Authors', 'Keywords'), sep = ';')",
       call. = FALSE
@@ -126,7 +118,7 @@ read_single_biblio <- function(file, format, id, actors, sep, ...) {
 #' Read a generic CSV with user-specified columns
 #' @keywords internal
 read_generic <- function(file, id = NULL, actors = NULL, sep = ";") {
-  stopifnot(file.exists(file))
+  check_file(file)
 
   data <- utils::read.csv(file, stringsAsFactors = FALSE, fileEncoding = "UTF-8",
                            check.names = FALSE)
@@ -184,8 +176,12 @@ detect_format <- function(file) {
   ## WoS plaintext: starts with FN or PT
   if (grepl("^(FN|PT)\\s", first)) return("wos")
 
-  ## CSV-based: check header line
+  ## CSV-based: check header line — Dimensions prepends a metadata row so
+  ## also check line 2 when line 1 looks like "About the data: ..."
   header <- tolower(first)
+  if (grepl("^\"?about the data", header) && length(lines) >= 2) {
+    header <- tolower(trimws(lines[2]))
+  }
 
   ## Scopus: has EID column
   if (grepl("\\beid\\b", header)) return("scopus")
@@ -195,6 +191,9 @@ detect_format <- function(file) {
 
   ## Lens: has "lens id"
   if (grepl("lens id", header)) return("lens")
+
+  ## OpenAlex flat CSV: has "authorships.author.display_name" column header
+  if (grepl("authorships\\.author\\.display_name", header)) return("openalex_csv")
 
   "unknown"
 }

@@ -1,6 +1,6 @@
 # bibnets
 
-[![R-CMD-check](https://github.com/mohsaqr/citenets/actions/workflows/R-CMD-check.yml/badge.svg)](https://github.com/mohsaqr/citenets/actions/workflows/R-CMD-check.yml)
+[![R-CMD-check](https://github.com/mohsaqr/bibnets/actions/workflows/R-CMD-check.yml/badge.svg)](https://github.com/mohsaqr/bibnets/actions/workflows/R-CMD-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 R package for constructing bibliometric networks from scholarly data — co-authorship, co-citation, bibliographic coupling, keyword co-occurrence, historiographs, and more.
@@ -8,15 +8,15 @@ R package for constructing bibliometric networks from scholarly data — co-auth
 ## What it does
 
 - **8 network functions**: author, document, reference, keyword, source, institution, country, plus generic `conetwork()`
-- **13 counting methods**: full, fractional, paper, strength, harmonic, arithmetic, geometric, adaptive geometric, golden ratio, first, last, first–last, position-weighted
+- **14 counting methods**: full, fractional, paper, strength, harmonic, arithmetic, geometric, adaptive geometric, golden ratio, first, last, first–last, position-weighted, attention-decay
 - **6 similarity measures**: association strength, cosine, Jaccard, inclusion, equivalence
-- **9 readers**: Scopus, Web of Science, OpenAlex, BibTeX, RIS, Lens.org, Dimensions, Crossref (rcrossref), Semantic Scholar
+- **9 readers**: Scopus, Web of Science, OpenAlex (JSON + flat CSV), BibTeX, RIS, Lens.org, Dimensions, Crossref (rcrossref)
 - **Auto-detect reader**: `read_biblio()` identifies format from file content
 - **Network reduction**: `backbone()` (Serrano disparity filter), `prune()`, `filter_top()`
 - **Temporal analysis**: `temporal_network()` — fixed, sliding, or cumulative windows over any network function
 - **Historiograph**: `historiograph()` + `local_citations()` — chronological citation history
 - **Export**: `to_gephi()`, `to_graphml()`, `to_igraph()`, `to_matrix()`, `to_cograph()`
-- **S3 class**: all network functions return a `citenets_network` with `print()` and `summary()` methods
+- **S3 class**: all network functions return a `bibnets_network` with `print()` and `summary()` methods
 - **3 hard dependencies** (Matrix, stats, utils)
 - Numerically validated against bibliometrix and biblionetwork
 
@@ -24,16 +24,16 @@ R package for constructing bibliometric networks from scholarly data — co-auth
 
 ```r
 # install.packages("remotes")
-remotes::install_github("mohsaqr/citenets")
+remotes::install_github("mohsaqr/bibnets")
 ```
 
 ## Quick start
 
 ```r
-library(citenets)
+library(bibnets)
 
 # Auto-detect format and read
-data <- read_biblio("export.csv")      # Scopus, WoS, Dimensions, Lens, BibTeX, RIS
+data <- read_biblio("export.csv")      # Scopus, WoS, Dimensions, Lens, BibTeX, RIS, OpenAlex CSV
 
 # Build networks
 author_network(data, "collaboration", counting = "harmonic")
@@ -84,10 +84,11 @@ to_matrix(edges)                              # adjacency matrix
 | `"last"` | Last author only | Yes |
 | `"first_last"` | First and last upweighted | Yes |
 | `"position_weighted"` | Custom weight vector | Yes |
+| `"attention_decay"` | exp(−λ × normalized distance) between each author pair | Yes |
 
 ## Comparison
 
-| Feature | citenets | bibliometrix | biblionetwork |
+| Feature | bibnets | bibliometrix | biblionetwork |
 |---|---|---|---|
 | Counting methods | 13 | 2 | 4 |
 | Similarity measures | 6 | 3 | 6 |

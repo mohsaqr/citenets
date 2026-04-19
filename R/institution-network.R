@@ -12,52 +12,74 @@
 #' @param min_occur Integer. Minimum papers per institution. Default 1.
 #' @param top_n Integer or NULL. Return only the top n edges by weight.
 #'   Default NULL (all edges).
+#' @inheritParams author_network
 #'
-#' @return A data frame with columns `from`, `to`, `weight`, `count`, `shared`.
+#' @return Depends on `format`: a `bibnets_network` data frame (default),
+#'   a Gephi-ready data frame, an igraph graph, a cograph_network, or a
+#'   sparse matrix.
 #'
 #' @export
 #' @examples
-#' \dontrun{
-#' institution_network(data, "collaboration")
-#' }
+#' data(open_alex_gold_open_access_learning_analytics)
+#' institution_network(open_alex_gold_open_access_learning_analytics, "collaboration")
 institution_network <- function(data,
                                 type = "collaboration",
                                 counting = "full",
                                 similarity = "none",
                                 threshold = 0,
                                 min_occur = 1L,
-                                top_n = NULL) {
-  stopifnot(
-    is.data.frame(data),
-    "id" %in% names(data),
-    "affiliations" %in% names(data),
-    type %in% c("collaboration", "coupling", "equivalence"),
-    counting %in% position_independent_counts(),
-    similarity %in% c("none", "association", "cosine", "jaccard",
-                    "inclusion", "equivalence")
-  )
+                                attention = NULL,
+                                top_n = NULL,
+                                self_loops = FALSE,
+                                deduplicate = TRUE,
+                                format = "edgelist") {
+  check_data(data, c("id", "affiliations"))
+  check_choice(similarity, c("none", "association", "cosine", "jaccard",
+                              "inclusion", "equivalence"), "similarity")
+  check_format(format)
+
+  if (!is.null(attention)) {
+    check_choice(attention, all_attention_methods(), "attention")
+    B <- build_author_bipartite(data, field = "affiliations",
+                                counting = paste0("attention_", attention),
+                                deduplicate = deduplicate)
+    result <- multiply_bipartite(B, mode = "columns", similarity = similarity,
+                                 threshold = threshold, top_n = top_n,
+                                 self_loops = self_loops)
+    return(as_bibnets_network(result,
+      network_type = paste0("institution_attention_", attention),
+      counting = attention, similarity = similarity, format = format))
+  }
+
+  check_choice(type, c("collaboration", "coupling", "equivalence"), "type")
+  check_choice(counting, position_independent_counts(), "counting")
 
   result <- if (type == "collaboration") {
-    B <- build_bipartite(data, field = "affiliations", min_freq = min_occur)
+    B <- build_bipartite(data, field = "affiliations", min_freq = min_occur, deduplicate = deduplicate)
     B <- apply_counting(B, counting = counting, network_type = "symmetric")
     multiply_bipartite(B, mode = "columns", similarity = similarity,
-                       threshold = threshold, top_n = top_n)
+                       threshold = threshold, top_n = top_n,
+                       self_loops = self_loops)
 
   } else if (type == "coupling") {
-    stopifnot("references" %in% names(data))
+    if (!"references" %in% names(data))
+      stop("Column 'references' not found. Required for type = 'coupling'.", call. = FALSE)
     agg <- aggregate_by_entity(data, entity_field = "affiliations",
                                 value_field = "references")
     B <- build_bipartite(agg, field = "references")
     B <- apply_counting(B, counting = counting, network_type = "coupling")
     multiply_bipartite(B, mode = "rows", similarity = similarity,
-                       threshold = threshold, top_n = top_n)
+                       threshold = threshold, top_n = top_n,
+                       self_loops = self_loops)
 
   } else {
-    B <- build_bipartite(data, field = "affiliations", min_freq = min_occur)
+    B <- build_bipartite(data, field = "affiliations", min_freq = min_occur, deduplicate = deduplicate)
     multiply_bipartite(B, mode = "columns", similarity = "cosine",
-                       threshold = threshold, top_n = top_n)
+                       threshold = threshold, top_n = top_n,
+                       self_loops = self_loops)
   }
 
-  as_citenets_network(result, network_type = paste0("institution_", type),
-                      counting = counting, similarity = similarity)
+  as_bibnets_network(result, network_type = paste0("institution_", type),
+                      counting = counting, similarity = similarity,
+                      format = format)
 }

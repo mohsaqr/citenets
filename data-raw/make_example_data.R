@@ -1,4 +1,4 @@
-## Create example bibliometric dataset for citenets package
+## Create example bibliometric dataset for bibnets package
 ## A small but realistic dataset of 10 papers with overlapping
 ## authors, references, and keywords — enough to test all network types.
 

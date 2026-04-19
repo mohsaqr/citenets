@@ -18,13 +18,9 @@
 #' *Scientometrics*, 96(3), 845--864. \doi{10.1007/s11192-012-0940-1}
 #'
 #' @keywords internal
-build_bipartite <- function(data, field, min_freq = 1L) {
-  stopifnot(
-    is.data.frame(data),
-    "id" %in% names(data),
-    field %in% names(data),
-    is.list(data[[field]])
-  )
+build_bipartite <- function(data, field, min_freq = 1L, deduplicate = TRUE) {
+  check_data(data, c("id", field))
+  data <- ensure_list_column(data, field)
 
   ids <- as.character(data[["id"]])
   entities_list <- data[[field]]
@@ -48,6 +44,13 @@ build_bipartite <- function(data, field, min_freq = 1L) {
     keep <- entity_names %in% keep_entities
     work_idx <- work_idx[keep]
     entity_names <- entity_names[keep]
+  }
+
+  ## Optionally deduplicate: each (paper, entity) pair counts at most once
+  if (deduplicate) {
+    dup <- duplicated(paste(work_idx, entity_names))
+    work_idx     <- work_idx[!dup]
+    entity_names <- entity_names[!dup]
   }
 
   ## Map entity names to integer indices

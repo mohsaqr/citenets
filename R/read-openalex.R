@@ -1,14 +1,16 @@
-#' Convert OpenAlex data to citenets format
+#' Convert OpenAlex data to bibnets format
 #'
 #' Takes the output of [openalexR::oa_fetch()] (a tibble/data frame of works)
-#' and converts it to the standardized citenets format with list-columns.
+#' and converts it to the standardized bibnets format with list-columns.
 #'
 #' @param data A data frame from `oa_fetch(entity = "works", ...)`. Must
 #'   contain at least an `id` column. Common columns include `display_name`,
 #'   `publication_year`, `so`, `doi`, `cited_by_count`, `referenced_works`,
 #'   `ab`, and `author` (nested).
 #'
-#' @return A data frame with the same column structure as [read_scopus()].
+#' @return A data frame in the standard bibnets format: `id`, `title`,
+#'   `year`, `journal`, `doi`, `cited_by_count`, `abstract`, `type`,
+#'   plus list-columns `authors`, `references`, and `keywords`.
 #'
 #' @export
 #' @examples
@@ -119,6 +121,77 @@ read_openalex <- function(data) {
   result$authors <- authors
   result$references <- references
   result$keywords <- keywords
+
+  result
+}
+
+
+#' Read a flat OpenAlex CSV export
+#'
+#' Reads the flat CSV format downloaded directly from the OpenAlex website
+#' (`openalex.org/works` exports). Multi-value fields are pipe-delimited (`|`).
+#' This is distinct from the nested tibble produced by [openalexR::oa_fetch()],
+#' which is handled by [read_openalex()].
+#'
+#' @param file Path to the CSV file.
+#' @param sep Character. Delimiter for multi-value fields. Default `"|"`.
+#'
+#' @return A data frame in the standard bibnets format: `id`, `title`,
+#'   `year`, `journal`, `doi`, `cited_by_count`, `abstract`, `type`,
+#'   plus list-columns `authors`, `references`, `keywords`, `affiliations`,
+#'   `countries`. `abstract` and `references` are always `NA` / empty
+#'   (not available in the flat export).
+#'
+#' @export
+#' @examples
+#' f <- system.file("extdata", "openalex_works.csv", package = "bibnets")
+#' data <- read_openalex_csv(f)
+read_openalex_csv <- function(file, sep = "|") {
+  check_file(file)
+
+  raw <- utils::read.csv(file, stringsAsFactors = FALSE, fileEncoding = "UTF-8",
+                          check.names = FALSE)
+
+  n <- nrow(raw)
+
+  safe_col <- function(col, default = NA_character_) {
+    if (col %in% names(raw)) as.character(raw[[col]])
+    else rep(default, n)
+  }
+
+  id          <- sub("^https://openalex\\.org/", "", safe_col("id"))
+  title       <- safe_col("display_name")
+  year        <- suppressWarnings(as.integer(safe_col("publication_year")))
+  journal     <- safe_col("primary_location.source.display_name")
+  doi         <- sub("^https://doi\\.org/", "", safe_col("doi"))
+  doi[doi == ""] <- NA_character_
+  cited_by    <- suppressWarnings(as.integer(safe_col("cited_by_count")))
+  cited_by[is.na(cited_by)] <- 0L
+  abstract    <- rep(NA_character_, n)
+  type        <- safe_col("type")
+  authors     <- split_field(safe_col("authorships.author.display_name", ""), sep = sep)
+  affiliations <- split_field(safe_col("authorships.institutions.display_name", ""), sep = sep)
+  countries   <- split_field(safe_col("authorships.countries", ""), sep = sep)
+  keywords    <- split_field(safe_col("primary_topic.display_name", ""), sep = sep)
+  references  <- vector("list", n)
+
+  result <- data.frame(
+    id            = id,
+    title         = title,
+    year          = year,
+    journal       = journal,
+    doi           = doi,
+    cited_by_count = cited_by,
+    abstract      = abstract,
+    type          = type,
+    stringsAsFactors = FALSE
+  )
+
+  result$authors      <- authors
+  result$references   <- references
+  result$keywords     <- keywords
+  result$affiliations <- affiliations
+  result$countries    <- countries
 
   result
 }

@@ -20,8 +20,11 @@
 #' @param min_occur Integer. Minimum entity frequency. Default 1.
 #' @param top_n Integer or NULL. Return only the top n edges by weight.
 #'   Default NULL (all edges).
+#' @inheritParams author_network
 #'
-#' @return A data frame with columns `from`, `to`, `weight`, `count`, `shared`.
+#' @return Depends on `format`: a `bibnets_network` data frame (default),
+#'   a Gephi-ready data frame, an igraph graph, a cograph_network, or a
+#'   sparse matrix.
 #'
 #' @export
 #' @examples
@@ -50,32 +53,35 @@ conetwork <- function(data,
                        similarity = "none",
                        threshold = 0,
                        min_occur = 1L,
-                       top_n = NULL) {
-  stopifnot(
-    is.data.frame(data),
-    "id" %in% names(data),
-    field %in% names(data),
-    counting %in% position_independent_counts(),
-    similarity %in% c("none", "association", "cosine", "jaccard",
-                    "inclusion", "equivalence")
-  )
+                       top_n = NULL,
+                       self_loops = FALSE,
+                       deduplicate = TRUE,
+                       format = "edgelist") {
+  check_data(data, c("id", field))
+  check_choice(counting, position_independent_counts(), "counting")
+  check_choice(similarity, c("none", "association", "cosine", "jaccard",
+                              "inclusion", "equivalence"), "similarity")
+  check_format(format)
 
   data <- ensure_list_column(data, field, sep)
 
   result <- if (is.null(by)) {
     ## Co-occurrence within one field (same document)
-    B <- build_bipartite(data, field = field, min_freq = min_occur)
+    B <- build_bipartite(data, field = field, min_freq = min_occur, deduplicate = deduplicate)
     B <- apply_counting(B, counting = counting, network_type = "symmetric")
     multiply_bipartite(B, mode = "columns", similarity = similarity,
-                       threshold = threshold, top_n = top_n)
+                       threshold = threshold, top_n = top_n,
+                       self_loops = self_loops)
   } else {
     ## Entities linked by shared values from `by` field
-    stopifnot(by %in% names(data))
+    if (!by %in% names(data))
+      stop("Column '", by, "' not found in data.", call. = FALSE)
     data <- ensure_list_column(data, by, sep)
     build_by_network(data, field = field, by = by,
                      counting = counting, similarity = similarity,
                      threshold = threshold, min_occur = min_occur,
-                     top_n = top_n)
+                     top_n = top_n, self_loops = self_loops,
+                     deduplicate = deduplicate)
   }
 
   net_type <- if (is.null(by)) {
@@ -83,15 +89,17 @@ conetwork <- function(data,
   } else {
     paste0(field, "_by_", by)
   }
-  as_citenets_network(result, network_type = net_type,
-                      counting = counting, similarity = similarity)
+  as_bibnets_network(result, network_type = net_type,
+                      counting = counting, similarity = similarity,
+                      format = format)
 }
 
 
 #' Build a network where entities share values from another field
 #' @keywords internal
 build_by_network <- function(data, field, by, counting, similarity,
-                              threshold, min_occur, top_n = NULL) {
+                              threshold, min_occur, top_n = NULL,
+                              self_loops = FALSE, deduplicate = TRUE) {
   field_col <- data[[field]]
   by_col <- data[[by]]
 
@@ -134,7 +142,7 @@ build_by_network <- function(data, field, by, counting, similarity,
   if (nrow(pairs) == 0L) {
     return(data.frame(from = character(0), to = character(0),
                       weight = numeric(0), count = integer(0),
-                      shared = integer(0), stringsAsFactors = FALSE))
+                      stringsAsFactors = FALSE))
   }
 
   ## Unique entity × by_value pairs
@@ -147,10 +155,11 @@ build_by_network <- function(data, field, by, counting, similarity,
   agg_df[["values"]] <- agg$by_val
 
   ## Build bipartite: entities × by_values, then project to entity × entity
-  B <- build_bipartite(agg_df, field = "values", min_freq = 1L)
+  B <- build_bipartite(agg_df, field = "values", min_freq = 1L, deduplicate = deduplicate)
   B <- apply_counting(B, counting = counting, network_type = "symmetric")
   multiply_bipartite(B, mode = "rows", similarity = similarity,
-                     threshold = threshold, top_n = top_n)
+                     threshold = threshold, top_n = top_n,
+                     self_loops = self_loops)
 }
 
 

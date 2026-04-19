@@ -4,18 +4,22 @@
 #' Like BibTeX, standard RIS does not include cited references.
 #'
 #' @param file Path to a `.ris` file.
+#' @param encoding Character. File encoding. Default `"UTF-8"`.
 #'
-#' @return A data frame with the same column structure as [read_scopus()].
+#' @return A data frame in the standard bibnets format: `id`, `title`,
+#'   `year`, `journal`, `doi`, `cited_by_count`, `abstract`, `type`,
+#'   plus list-columns `authors`, `references` (typically empty for
+#'   RIS), and `keywords`.
 #'
 #' @export
 #' @examples
 #' \dontrun{
 #' data <- read_ris("export.ris")
 #' }
-read_ris <- function(file) {
-  stopifnot(file.exists(file))
+read_ris <- function(file, encoding = "UTF-8") {
+  check_file(file)
 
-  lines <- readLines(file, encoding = "UTF-8", warn = FALSE)
+  lines <- readLines(file, encoding = encoding, warn = FALSE)
 
   records <- list()
   current <- list()

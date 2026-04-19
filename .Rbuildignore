@@ -10,4 +10,10 @@
 ^tmp$
 ^tutorials$
 ^data-raw$
+^LA_bibliometric_data$
 ^README\.md$
+^bibnets\.Rcheck$
+^bibnets_.*\.tar\.gz$
+^AGENTS\.md$
+^cran-comments\.md$
+^DESCRIPTION\.orig$

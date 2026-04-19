@@ -27,12 +27,12 @@ biblio_data
 \description{
 A small synthetic dataset of 10 scholarly papers with overlapping authors,
 references, and keywords. Designed for testing and demonstrating all
-network construction functions in citenets.
+network construction functions in bibnets.
 }
 \examples{
 data(biblio_data)
-co_citation(biblio_data)
-coupling(biblio_data)
-co_authorship(biblio_data)
+reference_network(biblio_data)
+document_network(biblio_data, "coupling")
+author_network(biblio_data, "collaboration")
 }
 \keyword{datasets}

@@ -4,13 +4,17 @@
 \alias{read_lens}
 \title{Read Lens.org CSV export}
 \usage{
-read_lens(file)
+read_lens(file, encoding = "UTF-8")
 }
 \arguments{
 \item{file}{Path to a Lens.org CSV export file.}
+
+\item{encoding}{Character. File encoding. Default \code{"UTF-8"}.}
 }
 \value{
-A data frame with the same column structure as \code{\link[=read_scopus]{read_scopus()}}.
+A data frame in the standard bibnets format: \code{id}, \code{title},
+\code{year}, \code{journal}, \code{doi}, \code{cited_by_count}, \code{abstract}, \code{type},
+plus list-columns \code{authors}, \code{references}, and \code{keywords}.
 }
 \description{
 Parses a CSV file exported from Lens.org into a standardized bibliometric

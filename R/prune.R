@@ -3,14 +3,9 @@
 #' Reduces a weighted edge list by removing weak or excess edges.
 #'
 #' @param edges A data frame with at least columns `from`, `to`, and `weight`.
-#' @param method Character. Pruning method:
-#'   \describe{
-#'     \item{`"threshold"`}{Remove edges with `weight < value`.}
-#'     \item{`"top_n"`}{For each node, keep only its `value` strongest edges.
-#'       An edge is kept if it is in the top `value` for *either* endpoint.}
-#'   }
-#' @param value Numeric. Threshold weight (for `"threshold"`) or number of
-#'   edges to keep per node (for `"top_n"`).
+#' @param threshold Numeric. Keep only edges with `weight >= threshold`.
+#' @param top_n Integer. For each node, keep only its `top_n` strongest edges.
+#'   An edge is kept if it is in the top `top_n` for *either* endpoint.
 #'
 #' @return The filtered edge data frame (same columns as input).
 #'
@@ -23,34 +18,33 @@
 #' )
 #'
 #' # Keep only edges with weight >= 3
-#' prune(edges, method = "threshold", value = 3)
+#' prune(edges, threshold = 3)
 #'
 #' # Keep the 2 strongest edges per node
-#' prune(edges, method = "top_n", value = 2)
-prune <- function(edges, method = "threshold", value) {
-  stopifnot(
-    is.data.frame(edges),
-    all(c("from", "to", "weight") %in% names(edges)),
-    method %in% c("threshold", "top_n"),
-    is.numeric(value), length(value) == 1L, value >= 0
-  )
+#' prune(edges, top_n = 2)
+prune <- function(edges, threshold = NULL, top_n = NULL) {
+  check_edges(edges)
+  if (is.null(threshold) && is.null(top_n))
+    stop("One of 'threshold' or 'top_n' must be specified.", call. = FALSE)
+  if (!is.null(threshold) && !is.null(top_n))
+    stop("Only one of 'threshold' or 'top_n' may be specified.", call. = FALSE)
 
   if (nrow(edges) == 0L) return(edges)
 
-  if (method == "threshold") {
-    edges <- edges[edges$weight >= value, ]
+  if (!is.null(threshold)) {
+    if (!is.numeric(threshold) || length(threshold) != 1L || threshold < 0)
+      stop("'threshold' must be a non-negative number", call. = FALSE)
+    edges <- edges[edges$weight >= threshold, ]
     edges <- edges[order(-edges$weight), ]
     rownames(edges) <- NULL
     return(edges)
   }
 
-  ## top_n: keep edge if it is in the top-value edges for either endpoint
-  n <- as.integer(value)
+  if (!is.numeric(top_n) || length(top_n) != 1L || top_n < 0)
+    stop("'top_n' must be a non-negative number", call. = FALSE)
+  n <- as.integer(top_n)
 
-  ## Build adjacency weight list in one O(m) pass via split(), then find
-  ## each node's n-th strongest weight as its cutoff.
   adj <- split(c(edges$weight, edges$weight), c(edges$from, edges$to))
-
   cutoff <- vapply(adj, function(w) {
     if (length(w) <= n) return(-Inf)
     sort(w, decreasing = TRUE)[n]

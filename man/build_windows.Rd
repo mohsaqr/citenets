@@ -4,7 +4,7 @@
 \alias{build_windows}
 \title{Build time window definitions}
 \usage{
-build_windows(min_year, max_year, window, step, strategy)
+build_windows(min_time, max_time, window, step, strategy)
 }
 \description{
 Build time window definitions

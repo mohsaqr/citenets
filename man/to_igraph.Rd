@@ -8,7 +8,7 @@ to_igraph(edges, directed = FALSE)
 }
 \arguments{
 \item{edges}{A data frame with at least \code{from}, \code{to}, \code{weight} columns,
-as returned by any network function in citenets.}
+as returned by any network function in bibnets.}
 
 \item{directed}{Logical. Default \code{FALSE}.}
 }

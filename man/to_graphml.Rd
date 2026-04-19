@@ -21,7 +21,7 @@ If \code{file = NULL}: GraphML as a character string. Otherwise writes
 the file and returns the path invisibly.
 }
 \description{
-Writes a citenets edge list (and optional node attributes) to a GraphML
+Writes a bibnets edge list (and optional node attributes) to a GraphML
 file using pure base R — no XML package required.
 }
 \examples{

@@ -27,7 +27,8 @@ Numeric vector of length \code{n}, summing to 1.
 }
 \description{
 Given the number of authors and their positions, returns a weight vector
-using the specified counting method. All position-dependent methods
-normalize weights to sum to 1 per paper.
+for positional counting methods. All methods normalize weights to sum to 1
+per paper. Position-independent methods (fractional, paper, strength) are
+handled by \code{\link[=apply_counting]{apply_counting()}} instead.
 }
 \keyword{internal}

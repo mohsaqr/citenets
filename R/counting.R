@@ -1,8 +1,9 @@
 #' Compute positional author weights for a single paper
 #'
 #' Given the number of authors and their positions, returns a weight vector
-#' using the specified counting method. All position-dependent methods
-#' normalize weights to sum to 1 per paper.
+#' for positional counting methods. All methods normalize weights to sum to 1
+#' per paper. Position-independent methods (fractional, paper, strength) are
+#' handled by [apply_counting()] instead.
 #'
 #' @param n Integer. Number of authors.
 #' @param counting Character. Counting method.
@@ -23,18 +24,9 @@ author_weights <- function(n, counting = "fractional",
 
   w <- switch(counting,
 
-    ## --- Position-independent ---
     full = rep(1, n),
 
     fractional = rep(1 / n, n),
-
-    paper = {
-      ## Batagelj: total network contribution per paper = 1
-      ## n*(n-1)/2 links, so each entry = sqrt(2/(n*(n-1)))
-      ## But for weights vector: equal shares, network-level normalization
-      ## handled in multiply step
-      rep(1 / n, n)
-    },
 
     ## --- Position-dependent ---
     harmonic = {
@@ -112,6 +104,31 @@ author_weights <- function(n, counting = "fractional",
       raw / sum(raw)
     },
 
+    ## --- Attention weights ---
+    attention_proximity = {
+      ## Pyramid: center entities get most weight, edges get least
+      raw <- pmin(pos, n + 1 - pos)
+      raw / sum(raw)
+    },
+
+    attention_lead = {
+      ## Quadratic drop from first: lead author dominates
+      raw <- (n + 1 - pos)^2
+      raw / sum(raw)
+    },
+
+    attention_last = {
+      ## Quadratic rise to last: last author (supervisor/PI) dominates
+      raw <- pos^2
+      raw / sum(raw)
+    },
+
+    attention_circular = {
+      ## Edges high, center low: first + last are equally prominent
+      raw <- pmax(pos, n + 1 - pos)
+      raw / sum(raw)
+    },
+
     stop(sprintf("Unknown counting method: '%s'", counting), call. = FALSE)
   )
 
@@ -132,11 +149,13 @@ author_weights <- function(n, counting = "fractional",
 #'
 #' @return A sparse weighted bipartite matrix (works x authors).
 #' @keywords internal
-build_author_bipartite <- function(data, counting = "full",
+build_author_bipartite <- function(data, field = "authors",
+                                   counting = "full",
                                    position_weights = c(1, 0.8, 0.6, 0.4),
-                                   first_last_weight = 2) {
+                                   first_last_weight = 2,
+                                   deduplicate = TRUE) {
   ids <- as.character(data[["id"]])
-  authors_list <- data[["authors"]]
+  authors_list <- data[[field]]
 
   ## Expand to long form with positions
   n_per_paper <- lengths(authors_list)
@@ -152,6 +171,15 @@ build_author_bipartite <- function(data, counting = "full",
   work_idx <- work_idx[keep]
   author_names <- author_names[keep]
   positions <- positions[keep]
+
+  ## Deduplicate: keep first occurrence of each (paper, author) pair
+  if (deduplicate) {
+    dup <- duplicated(paste(work_idx, author_names))
+    work_idx     <- work_idx[!dup]
+    author_names <- author_names[!dup]
+    positions    <- positions[!dup]
+  }
+
   n_per <- n_per_paper[work_idx]
 
   ## Compute weights
@@ -200,27 +228,22 @@ apply_counting <- function(B, counting = "full",
                            network_type = "symmetric") {
   if (counting == "full") return(B)
 
+  dn <- dimnames(B)
+
   n_per_work <- Matrix::rowSums(B > 0)
   n_per_work[n_per_work == 0] <- 1
 
   if (counting == "fractional") {
     if (network_type == "symmetric") {
-      ## Perianes-Rodriguez: each entity's total per paper = 1
-      ## Link weight = 1/(n-1) per shared paper
       w <- ifelse(n_per_work > 1, 1 / (n_per_work - 1), 1)
     } else {
-      ## Coupling/other: weight = 1/n per entity
       w <- 1 / n_per_work
     }
     B <- Matrix::Diagonal(x = sqrt(w)) %*% B
 
   } else if (counting == "paper") {
     if (network_type == "symmetric") {
-      w <- ifelse(
-        n_per_work > 1,
-        2 / (n_per_work * (n_per_work - 1)),
-        1
-      )
+      w <- ifelse(n_per_work > 1, 2 / (n_per_work * (n_per_work - 1)), 1)
     } else {
       w <- 1 / n_per_work
     }
@@ -231,12 +254,14 @@ apply_counting <- function(B, counting = "full",
     entity_freq <- Matrix::colSums(B > 0)
     entity_freq[entity_freq == 0] <- 1
     idf <- log(n_works / entity_freq)
-    row_w <- 1 / n_per_work
-
-    B <- Matrix::Diagonal(x = sqrt(row_w)) %*% B %*%
-      Matrix::Diagonal(x = sqrt(idf))
+    ## IDF weights columns only; row normalization (1/n_i × 1/n_j) is deferred
+    ## to multiply_bipartite so the denominator is the product n_i × n_j, not
+    ## the geometric mean √(n_i × n_j) — Perianes-Rodriguez et al. (2016).
+    B <- B %*% Matrix::Diagonal(x = sqrt(idf))
+    attr(B, "row_scale") <- n_per_work
   }
 
+  dimnames(B) <- dn
   B
 }
 
@@ -252,10 +277,17 @@ position_independent_counts <- function() {
 #' @keywords internal
 position_dependent_counts <- function() {
   c("harmonic", "arithmetic", "geometric", "adaptive_geometric",
-    "golden", "first", "last", "first_last", "position_weighted")
+    "golden", "first", "last", "first_last", "position_weighted",
+    "attention_proximity", "attention_lead", "attention_last",
+    "attention_circular")
 }
 
 #' @keywords internal
 all_counts <- function() {
   c(position_independent_counts(), position_dependent_counts())
+}
+
+#' @keywords internal
+all_attention_methods <- function() {
+  c("proximity", "lead", "last", "circular")
 }

@@ -33,12 +33,10 @@
 #' )
 #' backbone(edges, alpha = 0.05)
 backbone <- function(edges, alpha = 0.05) {
-  stopifnot(
-    is.data.frame(edges),
-    all(c("from", "to", "weight") %in% names(edges)),
-    is.numeric(alpha), length(alpha) == 1L,
-    alpha > 0, alpha < 1
-  )
+  check_edges(edges)
+  if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 0 || alpha >= 1)
+    stop("'alpha' must be a single number between 0 and 1 (exclusive), got: ",
+         alpha, call. = FALSE)
 
   if (nrow(edges) == 0L) {
     edges$alpha <- numeric(0)

@@ -6,23 +6,11 @@
 #' @param file Path to a Scopus CSV export file.
 #' @param encoding Character. File encoding. Default `"UTF-8"`.
 #'
-#' @return A data frame with columns:
-#'   \describe{
-#'     \item{`id`}{Scopus EID or row identifier.}
-#'     \item{`title`}{Document title.}
-#'     \item{`authors`}{List-column of author names.}
-#'     \item{`year`}{Publication year (integer).}
-#'     \item{`journal`}{Source title.}
-#'     \item{`doi`}{DOI string.}
-#'     \item{`references`}{List-column of cited reference strings.}
-#'     \item{`keywords`}{List-column of author keywords.}
-#'     \item{`index_keywords`}{List-column of index keywords.}
-#'     \item{`cited_by_count`}{Times cited (integer).}
-#'     \item{`abstract`}{Abstract text.}
-#'     \item{`affiliations`}{Affiliation string.}
-#'     \item{`type`}{Document type.}
-#'     \item{`language`}{Language.}
-#'   }
+#' @return A data frame in the standard bibnets format: `id`, `title`,
+#'   `year`, `journal`, `doi`, `cited_by_count`, `abstract`, `type`,
+#'   plus list-columns `authors`, `references`, and `keywords`.
+#'   Scopus-specific extras: `index_keywords` (list-column),
+#'   `affiliations` (character), `language` (character).
 #'
 #' @export
 #' @examples
@@ -30,7 +18,7 @@
 #' data <- read_scopus("scopus_export.csv")
 #' }
 read_scopus <- function(file, encoding = "UTF-8") {
-  stopifnot(file.exists(file))
+  check_file(file)
 
   raw <- utils::read.csv(file, stringsAsFactors = FALSE, fileEncoding = encoding,
                           check.names = FALSE)
@@ -85,7 +73,7 @@ read_scopus <- function(file, encoding = "UTF-8") {
     stringsAsFactors = FALSE
   )
 
-  result$authors <- split_field(get_col(col_map$authors), sep = ",")
+  result$authors <- split_field(get_col(col_map$authors), sep = ";")
   result$authors <- lapply(result$authors, standardize_authors)
 
   result$references <- split_field(get_col(col_map$refs), sep = ";")

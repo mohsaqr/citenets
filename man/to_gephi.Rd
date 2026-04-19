@@ -23,7 +23,7 @@ If \code{file} is a directory path: writes two CSV files invisibly and returns
 the file paths.
 }
 \description{
-Converts a citenets edge list (and optional node table) to the CSV format
+Converts a bibnets edge list (and optional node table) to the CSV format
 expected by Gephi's Data Laboratory. Column names are remapped to Gephi
 conventions (\code{Source}, \code{Target}, \code{Weight}, \code{Id}, \code{Label}).
 }

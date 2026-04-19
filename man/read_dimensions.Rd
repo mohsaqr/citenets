@@ -12,7 +12,11 @@ read_dimensions(file, encoding = "UTF-8")
 \item{encoding}{Character. File encoding. Default \code{"UTF-8"}.}
 }
 \value{
-A data frame with the same column structure as \code{\link[=read_scopus]{read_scopus()}}.
+A data frame in the standard bibnets format: \code{id}, \code{title},
+\code{year}, \code{journal}, \code{doi}, \code{cited_by_count}, \code{abstract}, \code{type},
+plus list-columns \code{authors}, \code{references}, and \code{keywords}.
+Dimensions-specific extras: \code{affiliations} (list-column),
+\code{countries} (list-column).
 }
 \description{
 Parses a CSV file exported from Dimensions into a standardized

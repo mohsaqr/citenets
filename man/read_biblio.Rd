@@ -4,15 +4,7 @@
 \alias{read_biblio}
 \title{Read bibliometric data}
 \usage{
-read_biblio(
-  path,
-  format = "auto",
-  id = NULL,
-  actors = NULL,
-  sep = ";",
-  deduplicate = FALSE,
-  ...
-)
+read_biblio(path, format = "auto", id = NULL, actors = NULL, sep = ";", ...)
 }
 \arguments{
 \item{path}{Character. Path to a file, a vector of file paths, or a
@@ -28,6 +20,7 @@ directory containing export files.}
 \item{\code{"ris"}}{RIS file.}
 \item{\code{"dimensions"}}{Dimensions CSV.}
 \item{\code{"lens"}}{Lens.org CSV.}
+\item{\code{"openalex_csv"}}{Flat OpenAlex CSV export (pipe-delimited fields).}
 \item{\code{"generic"}}{Any CSV. Use \code{id} and \code{actors} to specify columns.}
 }}
 
@@ -38,8 +31,6 @@ when \code{format = "generic"}. Default \code{NULL} (uses row numbers).}
 Only used when \code{format = "generic"}.}
 
 \item{sep}{Character. Delimiter for splitting actor columns. Default \code{";"}.}
-
-\item{deduplicate}{Logical. Remove exact duplicate rows. Default \code{FALSE}.}
 
 \item{...}{Additional arguments passed to the format-specific reader.}
 }

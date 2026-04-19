@@ -33,10 +33,33 @@
 #'   `counting = "position_weighted"`. Default `c(1, 0.8, 0.6, 0.4)`.
 #' @param first_last_weight Numeric. Multiplier for `counting = "first_last"`.
 #'   Default 2.
+#' @param attention Character or NULL. Attention-based weighting independent of
+#'   `type` and `counting`. One of `"proximity"` (center authors weighted most),
+#'   `"lead"` (first author dominates, quadratic drop), `"last"` (last author
+#'   dominates, quadratic rise), `"circular"` (first and last both prominent).
+#'   Default `NULL` (disabled).
 #' @param top_n Integer or NULL. Return only the top n edges by weight.
 #'   Default NULL (all edges).
+#' @param self_loops Logical. If `TRUE`, include self-loops (an entity linked
+#'   to itself). Default `FALSE`.
+#' @param deduplicate Logical. If `TRUE` (default), each `(paper, entity)`
+#'   pair is counted at most once — duplicate entries in the source data
+#'   (e.g., the same author listed twice on a paper) are treated as one
+#'   occurrence. Set to `FALSE` to count every raw occurrence.
+#' @param format Character. Output format:
+#'   \describe{
+#'     \item{`"edgelist"`}{Default. A `bibnets_network` data frame with
+#'       columns `from`, `to`, `weight`, `count`.}
+#'     \item{`"gephi"`}{Gephi-ready data frame: `Source`, `Target`,
+#'       `Weight`, `Count`, `Type`.}
+#'     \item{`"igraph"`}{An igraph graph object (requires igraph).}
+#'     \item{`"cograph"`}{A cograph_network object (requires cograph).}
+#'     \item{`"matrix"`}{A sparse adjacency matrix.}
+#'   }
 #'
-#' @return A data frame with columns `from`, `to`, `weight`, `count`, `shared`.
+#' @return Depends on `format`: a `bibnets_network` data frame (default),
+#'   a Gephi-ready data frame, an igraph graph, a cograph_network, or a
+#'   sparse matrix.
 #'
 #' @references
 #' Hagen, N. T. (2008). Harmonic allocation of authorship credit.
@@ -61,16 +84,31 @@ author_network <- function(data,
                            min_occur = 1L,
                            position_weights = c(1, 0.8, 0.6, 0.4),
                            first_last_weight = 2,
-                           top_n = NULL) {
-  stopifnot(
-    is.data.frame(data),
-    "id" %in% names(data),
-    "authors" %in% names(data),
-    type %in% c("collaboration", "coupling", "co_citation", "equivalence"),
-    counting %in% all_counts(),
-    similarity %in% c("none", "association", "cosine", "jaccard",
-                    "inclusion", "equivalence")
-  )
+                           attention = NULL,
+                           top_n = NULL,
+                           self_loops = FALSE,
+                           deduplicate = TRUE,
+                           format = "edgelist") {
+  check_data(data, c("id", "authors"))
+  check_choice(similarity, c("none", "association", "cosine", "jaccard",
+                              "inclusion", "equivalence"), "similarity")
+  check_format(format)
+
+  if (!is.null(attention)) {
+    check_choice(attention, all_attention_methods(), "attention")
+    B <- build_author_bipartite(data, field = "authors",
+                                counting = paste0("attention_", attention),
+                                deduplicate = deduplicate)
+    result <- multiply_bipartite(B, mode = "columns", similarity = similarity,
+                                 threshold = threshold, top_n = top_n,
+                                 self_loops = self_loops)
+    return(as_bibnets_network(result,
+      network_type = paste0("author_attention_", attention),
+      counting = attention, similarity = similarity, format = format))
+  }
+
+  check_choice(type, c("collaboration", "coupling", "co_citation", "equivalence"), "type")
+  check_choice(counting, all_counts(), "counting")
 
   is_positional <- counting %in% position_dependent_counts()
 
@@ -79,27 +117,31 @@ author_network <- function(data,
       B <- build_author_bipartite(
         data, counting = counting,
         position_weights = position_weights,
-        first_last_weight = first_last_weight
+        first_last_weight = first_last_weight,
+        deduplicate = deduplicate
       )
       m <- if (type == "equivalence") "cosine" else similarity
       multiply_bipartite(B, mode = "columns", similarity = m,
-                         threshold = threshold, top_n = top_n)
+                         threshold = threshold, top_n = top_n,
+                         self_loops = self_loops)
     } else {
-      B <- build_bipartite(data, field = "authors", min_freq = min_occur)
+      B <- build_bipartite(data, field = "authors", min_freq = min_occur, deduplicate = deduplicate)
       B <- apply_counting(B, counting = counting, network_type = "symmetric")
       multiply_bipartite(B, mode = "columns", similarity = similarity,
-                         threshold = threshold, top_n = top_n)
+                         threshold = threshold, top_n = top_n,
+                         self_loops = self_loops)
     }
 
   } else if (type == "coupling") {
-    stopifnot("references" %in% names(data))
+    check_data(data, "references")
     agg <- aggregate_by_entity(data, entity_field = "authors",
                                 value_field = "references")
     B <- build_bipartite(agg, field = "references")
     ct <- if (is_positional) "full" else counting
     B <- apply_counting(B, counting = ct, network_type = "coupling")
     multiply_bipartite(B, mode = "rows", similarity = similarity,
-                       threshold = threshold, top_n = top_n)
+                       threshold = threshold, top_n = top_n,
+                       self_loops = self_loops)
 
   } else if (type == "co_citation") {
     field <- if ("cited_first_authors" %in% names(data)) {
@@ -109,7 +151,7 @@ author_network <- function(data,
            "Parse reference strings to extract cited authors first.",
            call. = FALSE)
     }
-    B <- build_bipartite(data, field = field, min_freq = min_occur)
+    B <- build_bipartite(data, field = field, min_freq = min_occur, deduplicate = deduplicate)
     ct <- if (is_positional) "full" else counting
     B <- apply_counting(B, counting = ct, network_type = "symmetric")
     multiply_bipartite(B, mode = "columns", similarity = similarity,
@@ -118,10 +160,12 @@ author_network <- function(data,
   } else {
     B <- build_bipartite(data, field = "authors", min_freq = min_occur)
     multiply_bipartite(B, mode = "columns", similarity = "cosine",
-                       threshold = threshold, top_n = top_n)
+                       threshold = threshold, top_n = top_n,
+                       self_loops = self_loops)
   }
 
-  as_citenets_network(result,
+  as_bibnets_network(result,
     network_type = paste0("author_", type),
-    counting = counting, similarity = similarity)
+    counting = counting, similarity = similarity,
+    format = format)
 }

@@ -1,4 +1,4 @@
-# citenets 0.3.0
+# bibnets 0.3.0
 
 ## New functions
 
@@ -36,7 +36,7 @@
 - `read_dimensions()` / `read_crossref()` now apply `standardize_authors()`
   and `standardize_refs()` for consistency with other readers.
 
-# citenets 0.2.0
+# bibnets 0.2.0
 
 ## Breaking changes
 
@@ -50,7 +50,7 @@
 - `filter_top()` — keeps only the top-n most connected nodes.
 - `normalize()` — post-hoc normalisation of any edge list.
 
-# citenets 0.1.0
+# bibnets 0.1.0
 
 Initial release.
 

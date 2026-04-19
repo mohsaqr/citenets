@@ -13,7 +13,10 @@ conetwork(
   similarity = "none",
   threshold = 0,
   min_occur = 1L,
-  top_n = NULL
+  top_n = NULL,
+  self_loops = FALSE,
+  deduplicate = TRUE,
+  format = "edgelist"
 )
 }
 \arguments{
@@ -38,9 +41,30 @@ Default \code{";"}. Set to \code{NULL} if columns are already list-columns.}
 
 \item{top_n}{Integer or NULL. Return only the top n edges by weight.
 Default NULL (all edges).}
+
+\item{self_loops}{Logical. If \code{TRUE}, include self-loops (an entity linked
+to itself). Default \code{FALSE}.}
+
+\item{deduplicate}{Logical. If \code{TRUE} (default), each \verb{(paper, entity)}
+pair is counted at most once — duplicate entries in the source data
+(e.g., the same author listed twice on a paper) are treated as one
+occurrence. Set to \code{FALSE} to count every raw occurrence.}
+
+\item{format}{Character. Output format:
+\describe{
+\item{\code{"edgelist"}}{Default. A \code{bibnets_network} data frame with
+columns \code{from}, \code{to}, \code{weight}, \code{count}.}
+\item{\code{"gephi"}}{Gephi-ready data frame: \code{Source}, \code{Target},
+\code{Weight}, \code{Count}, \code{Type}.}
+\item{\code{"igraph"}}{An igraph graph object (requires igraph).}
+\item{\code{"cograph"}}{A cograph_network object (requires cograph).}
+\item{\code{"matrix"}}{A sparse adjacency matrix.}
+}}
 }
 \value{
-A data frame with columns \code{from}, \code{to}, \code{weight}, \code{count}, \code{shared}.
+Depends on \code{format}: a \code{bibnets_network} data frame (default),
+a Gephi-ready data frame, an igraph graph, a cograph_network, or a
+sparse matrix.
 }
 \description{
 With one field, entities are linked when they co-occur in the same

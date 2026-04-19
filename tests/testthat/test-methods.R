@@ -1,13 +1,13 @@
-## Tests for S3 print/summary methods and as_citenets_network()
+## Tests for S3 print/summary methods and as_bibnets_network()
 
-test_that("citenets_network has correct class", {
+test_that("bibnets_network has correct class", {
   d <- make_test_data()
   edges <- keyword_network(d)
-  expect_s3_class(edges, "citenets_network")
+  expect_s3_class(edges, "bibnets_network")
   expect_s3_class(edges, "data.frame")
 })
 
-test_that("all network functions return citenets_network", {
+test_that("all network functions return bibnets_network", {
   d <- make_test_data()
   dext <- d
   dext$countries    <- list(c("USA","UK"), c("USA","DE"), c("UK","DE"))
@@ -25,7 +25,7 @@ test_that("all network functions return citenets_network", {
   )
 
   for (e in fns) {
-    expect_true(inherits(e, "citenets_network"))
+    expect_true(inherits(e, "bibnets_network"))
   }
 })
 
@@ -39,19 +39,19 @@ test_that("network_type attribute is set correctly", {
   expect_equal(attr(document_network(d, "citation"), "network_type"), "document_citation")
 })
 
-test_that("print.citenets_network outputs correctly", {
+test_that("print.bibnets_network outputs correctly", {
   d <- make_test_data()
   edges <- keyword_network(d)
   out <- capture.output(print(edges))
   ## First line should mention nodes and edges
-  expect_true(grepl("citenets network", out[1]))
+  expect_true(grepl("bibnets network", out[1]))
   expect_true(grepl("nodes", out[1]))
   expect_true(grepl("edges", out[1]))
   ## Should mention the type
   expect_true(any(grepl("keyword_co_occurrence", out)))
 })
 
-test_that("print.citenets_network n= argument limits rows shown", {
+test_that("print.bibnets_network n= argument limits rows shown", {
   d <- make_test_data()
   edges <- keyword_network(d)
   ## Show only 2 rows
@@ -62,35 +62,35 @@ test_that("print.citenets_network n= argument limits rows shown", {
   }
 })
 
-test_that("summary.citenets_network outputs correctly", {
+test_that("summary.bibnets_network outputs correctly", {
   d <- make_test_data()
   edges <- keyword_network(d)
   out <- capture.output(summary(edges))
-  expect_true(any(grepl("citenets network", out)))
+  expect_true(any(grepl("bibnets network", out)))
   expect_true(any(grepl("Nodes", out)))
   expect_true(any(grepl("Edges", out)))
   expect_true(any(grepl("Density", out)))
   expect_true(any(grepl("Top nodes", out)))
 })
 
-test_that("summary.citenets_network returns object invisibly", {
+test_that("summary.bibnets_network returns object invisibly", {
   d <- make_test_data()
   edges <- keyword_network(d)
   ret <- capture.output(x <- summary(edges))
   expect_identical(x, edges)
 })
 
-test_that("print.citenets_network returns object invisibly", {
+test_that("print.bibnets_network returns object invisibly", {
   d <- make_test_data()
   edges <- keyword_network(d)
   ret <- capture.output(x <- print(edges))
   expect_identical(x, edges)
 })
 
-test_that("as_citenets_network stamps correct attributes", {
+test_that("as_bibnets_network stamps correct attributes", {
   df <- data.frame(from = "A", to = "B", weight = 1, stringsAsFactors = FALSE)
-  net <- citenets:::as_citenets_network(df, "test_type", "full", "cosine")
-  expect_s3_class(net, "citenets_network")
+  net <- bibnets:::as_bibnets_network(df, "test_type", "full", "cosine")
+  expect_s3_class(net, "bibnets_network")
   expect_equal(attr(net, "network_type"), "test_type")
   expect_equal(attr(net, "counting"),     "full")
   expect_equal(attr(net, "similarity"),   "cosine")

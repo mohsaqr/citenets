@@ -9,7 +9,8 @@ multiply_bipartite(
   mode = "columns",
   similarity = "none",
   threshold = 0,
-  top_n = NULL
+  top_n = NULL,
+  self_loops = FALSE
 )
 }
 \arguments{
@@ -27,7 +28,7 @@ by the counting method.}
 most frequent nodes and return all edges among them.}
 }
 \value{
-A data frame with columns \code{from}, \code{to}, \code{weight}, \code{count}, \code{shared}.
+A data frame with columns \code{from}, \code{to}, \code{weight}, \code{count}.
 }
 \description{
 The unified engine for all bibliometric networks. Operates entirely in

@@ -12,7 +12,9 @@ build_by_network(
   similarity,
   threshold,
   min_occur,
-  top_n = NULL
+  top_n = NULL,
+  self_loops = FALSE,
+  deduplicate = TRUE
 )
 }
 \description{

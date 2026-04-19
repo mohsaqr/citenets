@@ -7,7 +7,10 @@
 #' @param format Character. `"plaintext"` (default) for WoS tagged format,
 #'   or `"tab"` for tab-delimited export.
 #'
-#' @return A data frame with the same column structure as [read_scopus()].
+#' @return A data frame in the standard bibnets format: `id`, `title`,
+#'   `year`, `journal`, `doi`, `cited_by_count`, `abstract`, `type`,
+#'   plus list-columns `authors`, `references`, and `keywords`.
+#'   WoS-specific extra: `keywords_plus` (list-column).
 #'
 #' @export
 #' @examples
@@ -15,7 +18,8 @@
 #' data <- read_wos("savedrecs.txt")
 #' }
 read_wos <- function(file, format = "plaintext") {
-  stopifnot(file.exists(file), format %in% c("plaintext", "tab"))
+  check_file(file)
+  check_choice(format, c("plaintext", "tab"), "format")
 
   if (format == "tab") {
     return(read_wos_tab(file))

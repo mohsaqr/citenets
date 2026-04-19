@@ -28,20 +28,20 @@ make_temporal_data <- function() {
 ## ── build_windows ───────────────────────────────────────────────────────────
 
 test_that("build_windows fixed produces disjoint non-overlapping windows", {
-  w <- citenets:::build_windows(2018, 2022, window = 2, step = NULL, strategy = "fixed")
+  w <- bibnets:::build_windows(2018, 2022, window = 2, step = NULL, strategy = "fixed")
   expect_equal(w$start, c(2018, 2020, 2022))
   expect_equal(w$end,   c(2019, 2021, 2022))
   expect_equal(w$label, c("2018-2019", "2020-2021", "2022-2022"))
 })
 
 test_that("build_windows sliding produces overlapping windows", {
-  w <- citenets:::build_windows(2018, 2020, window = 2, step = 1, strategy = "sliding")
+  w <- bibnets:::build_windows(2018, 2020, window = 2, step = 1, strategy = "sliding")
   expect_equal(w$start, c(2018, 2019))
   expect_equal(w$end,   c(2019, 2020))
 })
 
 test_that("build_windows cumulative grows from first year", {
-  w <- citenets:::build_windows(2018, 2021, window = 2, step = 1, strategy = "cumulative")
+  w <- bibnets:::build_windows(2018, 2021, window = 2, step = 1, strategy = "cumulative")
   expect_true(all(w$start == 2018))
   expect_equal(w$end, c(2019, 2020, 2021))
 })

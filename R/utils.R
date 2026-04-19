@@ -69,34 +69,85 @@ aggregate_by_entity <- function(data, entity_field, value_field) {
 split_field <- function(x, sep = ";") {
   lapply(x, function(s) {
     if (is.na(s) || nchar(trimws(s)) == 0) return(character(0))
-    trimws(strsplit(s, sep, fixed = TRUE)[[1]])
+    parts <- trimws(strsplit(s, sep, fixed = TRUE)[[1]])
+    parts[nchar(parts) > 0]
   })
 }
 
 
 #' Standardize author names
 #'
-#' Converts author names to a standardized "LASTNAME, FI" format for
-#' consistent matching across records.
+#' Uppercase, whitespace normalisation, and dot removal from initials
+#' (`F.J.` → `FJ`). Name order and format are preserved — consistent with
+#' how bibliometrix handles multi-source data.
 #'
 #' @param x Character vector of author names.
-#'
-#' @return Character vector of standardized names.
+#' @param flip_names Logical. If `TRUE`, names in `Last, First` format are
+#'   reordered to `First Last`. Off by default — enable only when all names
+#'   in `x` reliably follow the `Last, First` convention.
+#' @return Character vector, uppercased and cleaned.
 #' @keywords internal
-standardize_authors <- function(x) {
-  x <- trimws(x)
-  x <- gsub("\\s+", " ", x)
+standardize_authors <- function(x, flip_names = FALSE) {
+  x <- trimws(gsub("\\s+", " ", x))
+  x <- x[nchar(x) > 0]
+  if (length(x) == 0) return(character(0))
+  x <- gsub(".", "", x, fixed = TRUE)
+  if (flip_names) {
+    comma <- grepl(",", x, fixed = TRUE)
+    x[comma] <- vapply(strsplit(x[comma], ",\\s*"), function(parts) {
+      paste(rev(trimws(parts)), collapse = " ")
+    }, character(1))
+  }
   toupper(x)
 }
 
 
-#' Standardize reference strings
-#'
-#' Cleans and normalizes cited reference strings for consistent matching.
-#'
-#' @param x Character vector of reference strings.
-#'
-#' @return Character vector of cleaned reference strings.
+## ── Input validation helpers ────────────────────────────────────────────────
+
+#' @keywords internal
+check_data <- function(data, required) {
+  if (!is.data.frame(data))
+    stop("'data' must be a data frame, not ", class(data)[1], call. = FALSE)
+  missing <- setdiff(required, names(data))
+  if (length(missing) > 0)
+    stop("Required column(s) not found in data: ",
+         paste0("'", missing, "'", collapse = ", "), call. = FALSE)
+}
+
+#' @keywords internal
+check_edges <- function(edges) {
+  if (!is.data.frame(edges))
+    stop("'edges' must be a data frame, not ", class(edges)[1], call. = FALSE)
+  missing <- setdiff(c("from", "to", "weight"), names(edges))
+  if (length(missing) > 0)
+    stop("Required column(s) not found in edges: ",
+         paste0("'", missing, "'", collapse = ", "),
+         "\nExpected columns: from, to, weight", call. = FALSE)
+}
+
+#' @keywords internal
+check_choice <- function(value, choices, name) {
+  if (!value %in% choices)
+    stop(sprintf("'%s' is not a valid %s. Choose one of: %s",
+                 value, name, paste0("'", choices, "'", collapse = ", ")),
+         call. = FALSE)
+}
+
+#' @keywords internal
+check_format <- function(format) {
+  valid <- c("edgelist", "gephi", "igraph", "cograph", "matrix")
+  check_choice(format, valid, "format")
+}
+
+#' @keywords internal
+check_file <- function(file) {
+  if (!file.exists(file))
+    stop("File not found: ", file, call. = FALSE)
+}
+
+
+`%||%` <- function(a, b) if (!is.null(a)) a else b
+
 #' @keywords internal
 standardize_refs <- function(x) {
   x <- trimws(x)

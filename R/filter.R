@@ -16,11 +16,9 @@
 #' # Keep only edges among the top 3 most connected authors
 #' filter_top(edges, 3)
 filter_top <- function(edges, n) {
-  stopifnot(
-    is.data.frame(edges),
-    all(c("from", "to", "weight") %in% names(edges)),
-    is.numeric(n), length(n) == 1, n > 0
-  )
+  check_edges(edges)
+  if (!is.numeric(n) || length(n) != 1 || n <= 0)
+    stop("'n' must be a positive number", call. = FALSE)
 
   if (nrow(edges) == 0L) return(edges)
 
@@ -32,5 +30,7 @@ filter_top <- function(edges, n) {
   top_nodes <- names(freq)[seq_len(min(n, length(freq)))]
 
   edges <- edges[edges$from %in% top_nodes & edges$to %in% top_nodes, ]
-  edges[order(-edges$weight), ]
+  edges <- edges[order(-edges$weight), ]
+  rownames(edges) <- NULL
+  edges
 }

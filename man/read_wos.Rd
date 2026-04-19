@@ -13,7 +13,10 @@ read_wos(file, format = "plaintext")
 or \code{"tab"} for tab-delimited export.}
 }
 \value{
-A data frame with the same column structure as \code{\link[=read_scopus]{read_scopus()}}.
+A data frame in the standard bibnets format: \code{id}, \code{title},
+\code{year}, \code{journal}, \code{doi}, \code{cited_by_count}, \code{abstract}, \code{type},
+plus list-columns \code{authors}, \code{references}, and \code{keywords}.
+WoS-specific extra: \code{keywords_plus} (list-column).
 }
 \description{
 Parses a Web of Science export file (plaintext or tab-delimited) into a
