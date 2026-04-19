@@ -123,13 +123,6 @@ in Transition Network Analysis (Saqr et al.).
 | S3 class + print/summary | Yes | Yes | No |
 
 ## References
-
-- Batagelj, V., & Cerinsek, M. (2013). On bibliographic networks. *Scientometrics*, 96(3), 845–864.
-- Hagen, N. T. (2008). Harmonic allocation of authorship credit. *Scientometrics*, 84(3), 785–793.
-- Liu, W., & Fang, H. (2023). A geometric counting method adaptive to the author number. *Journal of Informetrics*, 17(2), 101397.
-- Perianes-Rodriguez, A., Waltman, L., & van Eck, N. J. (2016). Constructing bibliometric networks. *Journal of Informetrics*, 10(4), 1089–1097.
-- Serrano, M. Á., Boguñá, M., & Vespignani, A. (2009). Extracting the multiscale backbone of complex weighted networks. *PNAS*, 106(16), 6483–6488.
-- van Eck, N. J., & Waltman, L. (2009). How to normalize cooccurrence data? *JASIST*, 60(8), 1635–1651.
 - Saqr, M., López-Pernas, S., & Helske, S. (2024). Temporal network analysis of students' interactions. *Journal of Learning Analytics*.
 
 ## License
