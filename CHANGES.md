@@ -1,3 +1,10 @@
+### 2026-04-19 — Author network attention + abstract_network sidelined
+- R/author-network.R: Added `attention` parameter to `author_network()` — four modes: `"proximity"` (middle authors weighted most), `"lead"` (first author dominant), `"last"` (last/PI dominant), `"none"` (full counting, no attention). Formula: `pmin(k-1, n-k) / floor(n/2)` for proximity. Demo at `tmp/gen_la_proximity.R`.
+- sidelined/: Moved `abstract_network()` and its tests out of package. Proximity-within-abstract co-occurrence produces wrong signal (boilerplate dominates over concepts). Architecture needs redesign to document-level keyphrase co-occurrence. All code preserved with notes in `sidelined/TODO.md`.
+- DESCRIPTION: Removed `udpipe` from Suggests (only needed for sidelined code). Fixed trailing comma.
+- NAMESPACE / man/: Removed `abstract_network` export and orphaned Rd file.
+- Tests: 640 passing, 0 failing.
+
 ### 2026-04-18 — Bipartite deduplication fix + equivalence validation
 - R/bipartite.R: Fixed `build_bipartite()` — deduplicate `(work_idx, entity_names)` pairs before constructing the sparse matrix. `Matrix::sparseMatrix` sums duplicate indices, so an author listed twice in one paper inflated co-authorship weights (e.g. 4× instead of 1). 7 papers in the OpenAlex dataset triggered this.
 - Equivalence confirmed on `open_alex_gold_open_access_learning_analytics` (1,508 papers): full-counting co-authorship = biblionetwork (max|diff|=0, 12,270 edges); fractional counting = biblionetwork (max|diff|=4.4e-16, floating point only); bibliographic coupling + cosine = biblionetwork (max|diff|=0, 36 edges).

@@ -1,50 +1,51 @@
-# Session Handoff — 2026-04-18
+# Session Handoff — 2026-04-19
 
 ## Completed
 
-- **R CMD check**: 0 errors | 0 warnings | 0 notes
-- **CRAN tarball**: `bibnets_0.3.0.tar.gz` built in project root
-- **Repo renamed**: `mohsaqr/citenets` → `mohsaqr/bibnets` on GitHub; local remote updated
-- **r-universe**: `bibnets` added to `mohsaqr.r-universe.dev/packages.json`
-- **DESCRIPTION**: Cleaned description (no function inventory), two references only (López-Pernas et al. ch.5, Apiola et al. ch.6), Sonsoles López-Pernas added as co-author (ORCID 0000-0002-9621-1392)
-- **Print method**: Rewritten — left-aligned names, right-aligned numbers, row indices, truncation at 30 chars
-- **`self_loops = FALSE`**: Added to all 8 builders + `multiply_bipartite()`
-- **`deduplicate = TRUE`**: Added to all 8 builders, `build_bipartite()`, `build_author_bipartite()` — each (paper, entity) pair counts at most once
-- **Equivalence validated** against biblionetwork on real datasets (0 diff full counting, ~4e-16 fractional)
-- **`scopus_quantum_cloud`**: Stripped `index_keywords` and `language` columns; now 499 × 12
-- **`country_network` / `institution_network` examples**: Updated to use `open_alex_gold_open_access_learning_analytics`
-- **`%||%`** null-coalescing operator added to utils.R
-- **561 tests passing**, 0 failing
+- **Author network attention** (`R/author-network.R`): `attention` parameter with four modes:
+  - `"proximity"` — middle authors weighted most via `pmin(k-1, n-k) / floor(n/2)`
+  - `"lead"` — first author dominant
+  - `"last"` — last author (PI) dominant
+  - `"none"` — full counting, no attention weighting
+  - Demo at `tmp/gen_la_proximity.R` → `tmp/la_proximity.html` (tabbed 4-way comparison)
+
+- **`abstract_network()` — sidelined** (`sidelined/`):
+  - Full implementation moved out of package (not exported, not tested in main suite)
+  - See `sidelined/TODO.md` for rationale and what to rethink
+  - UDPipe POS filtering, AttentionRank-lite scoring, windowed co-occurrence all implemented and working — the architecture (proximity-within-abstract) is the problem, not the code
+
+- **Package hygiene**: trailing comma fixed in DESCRIPTION, orphaned `man/abstract_network.Rd` removed, NAMESPACE clean, 640 tests passing
 
 ## Current State
 
-- Package is CRAN-ready. Tarball at `./bibnets_0.3.0.tar.gz`.
-- All network builders have consistent API: `type`, `counting`, `similarity`, `threshold`, `min_occur`, `top_n`, `self_loops`, `deduplicate`, `format`.
-- Equivalence with biblionetwork confirmed: co-authorship (full + fractional), country, institution on both bundled datasets.
+- Package: v0.3.0, 640 tests, 0 failures
+- All eight network builders work: `author_network`, `keyword_network`, `reference_network`, `document_network`, `source_network`, `country_network`, `institution_network`, `conetwork`
+- Author network has new `attention` parameter
+- `abstract_network` parked in `sidelined/` — do not ship
 
 ## Key Decisions
 
-- `deduplicate = TRUE` default: each (paper, entity) pair counts once. Matches biblionetwork behavior. User can set `FALSE` to count raw occurrences.
-- `self_loops = FALSE` default: entities not linked to themselves. User can set `TRUE`.
-- Uppercase normalization of entity labels is hardcoded (not user-controllable, by choice).
-- Reference-based networks kept exported but removed from vignette — reference disambiguation is the user's responsibility.
+- **Attention for authors, not abstracts**: position-based attention makes sense for bylines (first/middle/last author roles are meaningful); it does not translate to continuous text where token position is arbitrary
+- **`abstract_network` architecture problem**: proximity within one abstract is too noisy — a 150-word abstract puts almost everything within a 10-token window. The right design is document-level keyphrase co-occurrence: top-K phrases per abstract → edge if both appear in same paper → weight by Jaccard/association. Analogous to keyword co-occurrence but using extracted keyphrases.
+- **Sidelined, not deleted**: UDPipe path, AttentionRank-lite, greedy n-gram extractor, 39 tests all preserved and working in `sidelined/`
 
 ## Open Issues
 
-- **win-builder** not yet run (`devtools::check_win_devel()`). Recommended before CRAN submission.
-- **Keyword co-occurrence and bibliographic coupling** not yet validated against reference packages on real datasets (only tested on synthetic data).
-- **Vignette** not re-rendered after `deduplicate` / `self_loops` additions — these args don't appear in vignette examples so no change needed.
+- `abstract_network` needs redesign around document-level co-occurrence (not proximity-based)
+- AttentionRank scoring in `sidelined/` is reusable for keyphrase selection step
+- `sidelined/TODO.md` has full design notes
 
 ## Next Steps
 
-1. Run `devtools::check_win_devel()` — submit output to CRAN together with tarball.
-2. Submit `bibnets_0.3.0.tar.gz` at https://cran.r-project.org/submit.html.
-3. Commit and push to `mohsaqr/bibnets`.
-4. Optionally: add keyword co-occurrence equivalence tests on `scopus_quantum_cloud` vs biblionetwork/bibliometrix.
+1. **Redesign `abstract_network`** using document-level co-occurrence:
+   - Per abstract: score all phrases → keep top K by score (reuse YAKE/AttentionRank from `sidelined/`)
+   - Corpus level: edge(A, B) = abstracts containing both A and B
+   - Normalize with Jaccard/association (reuse `R/normalize.R`)
+2. Test with WoS LA corpus — expect substantive LA concepts, not methodological boilerplate
+3. Expose `top_k` and `similarity` as parameters
 
 ## Context
 
-- Package: `bibnets` v0.3.0, R >= 4.1.0
-- CRAN deps: `Matrix`, `stats`, `utils` only
-- Suggested: `igraph`, `tidygraph`, `cograph`, `bibliometrix`, `biblionetwork`, `rcrossref`, `openalexR`, `data.table`
-- Co-authors: Mohammed Saqr (cre), Sonsoles López-Pernas (aut)
+- WoS LA data: `/Users/mohammedsaqr/Downloads/LA_bibliometric_data 2/WoS/savedrecs (2–6).xls` — 4264 papers, 4162 with abstracts
+- UDPipe model cached at `~/Library/Application Support/org.R-project.R/R/bibnets/english-ewt-ud-2.5-191206.udpipe`
+- `devtools::load_all(".")` then `devtools::test(".")` to verify state
