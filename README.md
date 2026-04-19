@@ -124,6 +124,8 @@ in Transition Network Analysis (Saqr et al.).
 
 ## References
 - Saqr, M., López-Pernas, S., & Helske, S. (2024). Temporal network analysis of students' interactions. *Journal of Learning Analytics*.
+- Saqr, M., López-Pernas, S., Conde-González, M. Á., & Hernández-García, Á. (2024). Scientometrics: A concise introduction and a detailed methodology for mapping the scientific field of computing education research. *Learning Analytics Methods and Tutorials*, 491–518.
+- Saqr, M., López-Pernas, S., Conde-González, M. Á., & Hernández-García, Á. (2024). Social network analysis: A primer, a guide and a tutorial in R. *Learning Analytics Methods and Tutorials*, 491–518.
 
 ## License
 
