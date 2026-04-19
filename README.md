@@ -1,4 +1,4 @@
-# citenets
+# bibnets
 
 [![R-CMD-check](https://github.com/mohsaqr/citenets/actions/workflows/R-CMD-check.yml/badge.svg)](https://github.com/mohsaqr/citenets/actions/workflows/R-CMD-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
