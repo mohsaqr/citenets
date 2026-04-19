@@ -8,7 +8,8 @@ R package for constructing bibliometric networks from scholarly data — co-auth
 ## What it does
 
 - **8 network functions**: author, document, reference, keyword, source, institution, country, plus generic `conetwork()`
-- **14 counting methods**: full, fractional, paper, strength, harmonic, arithmetic, geometric, adaptive geometric, golden ratio, first, last, first–last, position-weighted, attention-decay
+- **13 counting methods**: full, fractional, paper, strength, harmonic, arithmetic, geometric, adaptive geometric, golden ratio, first, last, first–last, position-weighted
+- **4 attention weights** (`attention =`): proximity, lead, last, circular — position-based weighting inspired by attention mechanisms in TNA, applicable to author, keyword, country, and institution networks
 - **6 similarity measures**: association strength, cosine, Jaccard, inclusion, equivalence
 - **9 readers**: Scopus, Web of Science, OpenAlex (JSON + flat CSV), BibTeX, RIS, Lens.org, Dimensions, Crossref (rcrossref)
 - **Auto-detect reader**: `read_biblio()` identifies format from file content
@@ -40,6 +41,14 @@ author_network(data, "collaboration", counting = "harmonic")
 reference_network(data, similarity = "association")
 document_network(data, "coupling", similarity = "cosine")
 keyword_network(data)
+
+# Attention weighting — independent of counting/type
+author_network(data, attention = "lead")        # first author dominates
+author_network(data, attention = "last")        # last author (PI/supervisor) dominates
+author_network(data, attention = "proximity")   # center-of-list authors weighted most
+author_network(data, attention = "circular")    # first + last both prominent
+keyword_network(data, attention = "lead")       # works on any network type
+country_network(data, attention = "circular")
 
 # Generic: works with any data frame and any column
 conetwork(data, "authors", by = "keywords")   # authors linked by shared keywords
@@ -84,13 +93,27 @@ to_matrix(edges)                              # adjacency matrix
 | `"last"` | Last author only | Yes |
 | `"first_last"` | First and last upweighted | Yes |
 | `"position_weighted"` | Custom weight vector | Yes |
-| `"attention_decay"` | exp(−λ × normalized distance) between each author pair | Yes |
+
+## Attention weighting
+
+Position-based weighting via the `attention` parameter, available on `author_network()`,
+`keyword_network()`, `country_network()`, and `institution_network()`. When set, it runs
+independently — `type` and `counting` are ignored. Inspired by attention-decay mechanisms
+in Transition Network Analysis (Saqr et al.).
+
+| `attention =` | Weight shape | Interpretation |
+|---|---|---|
+| `"lead"` | Quadratic drop from first | Lead/first author gets dominant credit |
+| `"last"` | Quadratic rise to last | Last author (PI/supervisor) gets dominant credit |
+| `"proximity"` | Pyramid peak at center | Middle-of-list authors weighted most |
+| `"circular"` | High at both ends, low in middle | First and last equally prominent |
 
 ## Comparison
 
 | Feature | bibnets | bibliometrix | biblionetwork |
 |---|---|---|---|
 | Counting methods | 13 | 2 | 4 |
+| Attention weighting | 4 | — | — |
 | Similarity measures | 6 | 3 | 6 |
 | Position-dependent counting | Yes | No | No |
 | Temporal networks | Yes | Partial | No |
@@ -107,6 +130,7 @@ to_matrix(edges)                              # adjacency matrix
 - Perianes-Rodriguez, A., Waltman, L., & van Eck, N. J. (2016). Constructing bibliometric networks. *Journal of Informetrics*, 10(4), 1089–1097.
 - Serrano, M. Á., Boguñá, M., & Vespignani, A. (2009). Extracting the multiscale backbone of complex weighted networks. *PNAS*, 106(16), 6483–6488.
 - van Eck, N. J., & Waltman, L. (2009). How to normalize cooccurrence data? *JASIST*, 60(8), 1635–1651.
+- Saqr, M., López-Pernas, S., & Helske, S. (2024). Temporal network analysis of students' interactions. *Journal of Learning Analytics*.
 
 ## License
 
